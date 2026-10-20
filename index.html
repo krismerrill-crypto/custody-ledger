@@ -1,0 +1,1145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ledger">
+<meta name="theme-color" content="#0f172a">
+<title>Custody Ledger</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" id="touchIcon" href="apple-touch-icon.png">
+<style>
+:root{
+  --bg:#f4f6f9;--panel:#fff;--ink:#0f172a;--mute:#64748b;--line:#e2e8f0;--accent:#0d9488;--accent-ink:#fff;
+  --me:#14b8a6;--other:#f59e0b;--split:#8b5cf6;--bad:#dc2626;--good:#16a34a;--warn:#d97706;--chip:#eef2f7;
+  --shadow:0 1px 2px rgba(15,23,42,.06),0 4px 16px rgba(15,23,42,.06);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0b1220;--panel:#131c2e;--ink:#e8eefc;--mute:#93a1ba;--line:#24304a;--chip:#1c2740;--accent:#2dd4bf;--accent-ink:#04201c;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.35);}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+body{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+h1,h2,h3{margin:0;line-height:1.2}
+h1{font-size:24px;letter-spacing:-.02em}h2{font-size:18px}h3{font-size:15px}
+.mute{color:var(--mute)}.small{font-size:12.5px}.right{text-align:right}.row{display:flex;gap:10px;align-items:center}.wrap{flex-wrap:wrap}.grow{flex:1}.gap{gap:14px}
+#app{display:flex;min-height:100vh}
+#side{display:none}
+#main{flex:1;max-width:980px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 16px 24px;width:100%}
+#bar{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--panel);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:20}
+#bar button{flex:1;background:none;border:0;color:var(--mute);font:600 11px -apple-system,sans-serif;padding:4px 0;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+#bar button span{font-size:20px;line-height:1}
+#bar button.on{color:var(--accent)}
+@media (min-width:860px){
+  #side{display:flex;flex-direction:column;gap:4px;width:220px;padding:22px 12px;border-right:1px solid var(--line);position:sticky;top:0;height:100vh;background:var(--panel)}
+  #side .brand{font-weight:800;font-size:17px;padding:4px 10px 16px;letter-spacing:-.02em}
+  #side button{display:flex;gap:10px;align-items:center;background:none;border:0;color:var(--ink);text-align:left;padding:10px 12px;border-radius:10px;font:600 14px -apple-system,sans-serif;cursor:pointer}
+  #side button:hover{background:var(--chip)}#side button.on{background:var(--chip);color:var(--accent)}
+  #bar{display:none}body{padding-bottom:0}.homelock{display:none}
+  #main{padding:28px 32px}
+}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+.card.flat{box-shadow:none}
+.grid{display:grid;gap:12px}.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:600px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:minmax(0,1fr)}}
+.grid>*{min-width:0}
+.qa{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.qa button{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 6px;font:700 13px -apple-system,sans-serif;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;gap:6px;align-items:center;box-shadow:var(--shadow)}
+.qa button span{font-size:24px}.qa button:active{transform:scale(.97)}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.stat b{display:block;font-size:24px;letter-spacing:-.02em}.stat small{color:var(--mute);font-weight:600}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:12px;padding:11px 16px;font:700 14px -apple-system,sans-serif;cursor:pointer}
+.btn.ghost{background:var(--chip);color:var(--ink)}.btn.bad{background:var(--bad);color:#fff}.btn.sm{padding:7px 11px;font-size:13px;border-radius:9px}
+.btn:disabled{opacity:.5}
+input,select,textarea{width:100%;font:16px -apple-system,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 11px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{min-height:110px;resize:vertical}
+label.f{display:block;margin:0 0 12px}label.f>span{display:block;font-weight:700;font-size:12.5px;color:var(--mute);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+label.ck{display:flex;gap:10px;align-items:center;margin:0 0 12px;font-weight:600}label.ck input{width:20px;height:20px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--chip);color:var(--ink);border:1px solid transparent;border-radius:999px;padding:6px 11px;font:600 12.5px -apple-system,sans-serif;cursor:pointer}
+.chip.on{background:var(--accent);color:var(--accent-ink)}
+.badge{display:inline-block;border-radius:999px;padding:2px 8px;font-size:11.5px;font-weight:700;background:var(--chip);color:var(--mute)}
+.badge.r{background:#fee2e2;color:#b91c1c}.badge.y{background:#fef3c7;color:#92400e}.badge.g{background:#dcfce7;color:#166534}
+@media (prefers-color-scheme:dark){.badge.r{background:#4c1d1d;color:#fecaca}.badge.y{background:#4a3410;color:#fde68a}.badge.g{background:#123524;color:#bbf7d0}}
+.item{display:flex;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.item:last-child{border-bottom:0}.item .ic{font-size:22px;width:34px;text-align:center}
+.item .t{font-weight:700}.item .s{color:var(--mute);font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.void{opacity:.55;text-decoration:line-through}
+#sheetWrap{position:fixed;inset:0;background:rgba(2,6,23,.55);display:none;z-index:50;align-items:flex-end;justify-content:center}
+#sheetWrap.on{display:flex}
+#sheet{background:var(--panel);width:100%;max-width:640px;max-height:92vh;border-radius:22px 22px 0 0;display:flex;flex-direction:column}
+@media(min-width:700px){#sheetWrap{align-items:center}#sheet{border-radius:22px;max-height:88vh}}
+#sheet header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px}
+#sheet .body{padding:4px 18px calc(20px + env(safe-area-inset-bottom));overflow:auto}
+.x{background:var(--chip);border:0;border-radius:50%;width:32px;height:32px;font-size:16px;color:var(--ink);cursor:pointer}
+.lint{border:1px dashed var(--line);border-radius:12px;padding:10px 12px;margin:-4px 0 12px;font-size:13px}
+.lint .ok{color:var(--good);font-weight:700}.lint .w{margin:4px 0}.lint .w b{color:var(--warn)}
+.bar{height:10px;border-radius:6px;background:var(--chip);overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal .h{font-size:11px;font-weight:700;color:var(--mute);text-align:center;padding:4px 0}
+.cal .d{aspect-ratio:1/1.05;border-radius:10px;background:var(--bg);border:1px solid var(--line);position:relative;cursor:pointer;padding:4px;font-size:12px;font-weight:700;overflow:hidden}
+.cal .d.out{opacity:.35}.cal .d.today{outline:2px solid var(--accent)}
+.cal .d .pl{position:absolute;left:0;right:0;bottom:0;height:5px}
+.cal .d .dot{position:absolute;right:5px;top:5px;width:7px;height:7px;border-radius:50%;background:var(--bad)}
+.cal .d .ac{position:absolute;inset:auto 4px 8px 4px;height:14px;border-radius:5px}
+#lock{position:fixed;inset:0;background:var(--bg);z-index:100;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:30px}
+#lock.on{display:flex}
+#toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;z-index:200;display:none;max-width:90vw}
+#reportView{position:fixed;inset:0;background:#e5e7eb;z-index:60;overflow:auto;display:none}
+#reportView.on{display:block}
+#reportView .tb{position:sticky;top:0;background:#0f172a;padding:10px 14px;display:flex;gap:8px;align-items:center;z-index:2}
+#reportView .tb .t{color:#fff;font-weight:700;flex:1}
+.paper{background:#fff;color:#111;max-width:820px;margin:16px auto;padding:44px 48px;font:13.5px/1.5 Georgia,"Times New Roman",serif;box-shadow:0 2px 20px rgba(0,0,0,.15)}
+.paper h1{font-size:26px;margin-bottom:4px}.paper h2{font-size:17px;margin:26px 0 8px;border-bottom:2px solid #111;padding-bottom:4px;font-family:-apple-system,Helvetica,Arial,sans-serif}
+.paper table{width:100%;border-collapse:collapse;margin:8px 0;font-size:12.5px}.paper th,.paper td{border:1px solid #bbb;padding:5px 7px;text-align:left;vertical-align:top}.paper th{background:#f1f5f9}
+.paper .ent{border:1px solid #999;border-radius:4px;padding:10px 12px;margin:10px 0;page-break-inside:avoid}
+.paper .ent .hd{display:flex;justify-content:space-between;gap:10px;font-family:-apple-system,Helvetica,Arial,sans-serif;font-size:12px;color:#444}
+.paper .ent .tt{font-weight:700;font-size:14px;margin:3px 0}.paper .body{white-space:pre-wrap}
+.paper .meta{font-family:-apple-system,Helvetica,Arial,sans-serif;font-size:11.5px;color:#444;margin-top:5px}
+.paper img{max-width:100%;max-height:340px;border:1px solid #999}
+.paper .sig{margin-top:40px;display:flex;gap:40px}.paper .sig div{flex:1;border-top:1px solid #111;padding-top:4px;font-size:12px}
+.paper .mono{font-family:ui-monospace,Menlo,monospace;font-size:11px;word-break:break-all}
+@media print{
+  body>*:not(#reportView){display:none!important}
+  #reportView{position:static;background:#fff;overflow:visible;display:block!important}
+  #reportView .tb{display:none}.paper{box-shadow:none;margin:0;padding:0;max-width:none}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <nav id="side"></nav>
+  <main id="main"></main>
+</div>
+<nav id="bar"></nav>
+<div id="sheetWrap"><div id="sheet"></div></div>
+<div id="reportView"></div>
+<div id="lock"></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* =========================================================
+   Custody Ledger — local-first, tamper-evident custody record
+   ========================================================= */
+const $=(s,e=document)=>e.querySelector(s);
+const $$=(s,e=document)=>[...e.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const uid=()=>crypto.randomUUID?crypto.randomUUID():'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);
+const dkey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const lnow=()=>{const d=new Date();return `${dkey(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`};
+const dfrom=k=>new Date(k+'T12:00');
+const daysBetween=(a,b)=>Math.round((dfrom(b)-dfrom(a))/864e5);
+const addDays=(k,n)=>{const d=dfrom(k);d.setDate(d.getDate()+n);return dkey(d)};
+const fDate=s=>new Date(s.length<=10?s+'T12:00':s).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+const fTime=s=>new Date(s).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+const fDT=s=>s?`${fDate(s)} ${fTime(s)}`:'';
+const fTS=iso=>new Date(iso).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit'});
+const money=n=>(n<0?'-':'')+'$'+Math.abs(n).toFixed(2);
+const canon=o=>Array.isArray(o)?'['+o.map(canon).join(',')+']':(o&&typeof o==='object')?'{'+Object.keys(o).sort().map(k=>JSON.stringify(k)+':'+canon(o[k])).join(',')+'}':JSON.stringify(o===undefined?null:o);
+const hex=buf=>[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+const K256=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+function shaJS(bytes){
+  const l=bytes.length,n=(((l+8)>>6)+1)<<6,m=new Uint8Array(n);m.set(bytes);m[l]=0x80;
+  const dv=new DataView(m.buffer);dv.setUint32(n-8,Math.floor(l/0x20000000));dv.setUint32(n-4,(l<<3)>>>0);
+  const H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19],W=new Array(64);
+  const rr=(x,k)=>(x>>>k)|(x<<(32-k));
+  for(let o=0;o<n;o+=64){
+    for(let i=0;i<16;i++)W[i]=dv.getUint32(o+i*4);
+    for(let i=16;i<64;i++){const a=rr(W[i-15],7)^rr(W[i-15],18)^(W[i-15]>>>3),b=rr(W[i-2],17)^rr(W[i-2],19)^(W[i-2]>>>10);W[i]=(W[i-16]+a+W[i-7]+b)|0}
+    let [a,b,c,d,e,f,g,hh]=H;
+    for(let i=0;i<64;i++){
+      const t1=(hh+(rr(e,6)^rr(e,11)^rr(e,25))+((e&f)^(~e&g))+K256[i]+W[i])|0,t2=((rr(a,2)^rr(a,13)^rr(a,22))+((a&b)^(a&c)^(b&c)))|0;
+      hh=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0;
+    }
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+hh)|0;
+  }
+  return H.map(x=>(x>>>0).toString(16).padStart(8,'0')).join('');
+}
+const hasSubtle=()=>!!(window.crypto&&crypto.subtle&&crypto.subtle.digest);
+const sha=async s=>{const b=new TextEncoder().encode(s);if(hasSubtle()){try{return hex(await crypto.subtle.digest('SHA-256',b))}catch(e){}}return shaJS(b)};
+const shaBuf=async b=>{if(hasSubtle()){try{return hex(await crypto.subtle.digest('SHA-256',b))}catch(e){}}return shaJS(new Uint8Array(b))};
+function shortTitle(s){s=String(s).replace(/\s+/g,' ').trim();if(s.length<=60)return s;let c=s.slice(0,60);const i=c.lastIndexOf(' ');if(i>30)c=c.slice(0,i);return c.replace(/[.,;:!?"“”-]+$/,'')+'…'}
+function toast(m,ms=2200){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',ms)}
+
+/* ---------- constants ---------- */
+const KINDS={
+  incident:{label:'Incident',icon:'⚠️',color:'#ef4444'},
+  exchange:{label:'Exchange',icon:'🔄',color:'#0ea5e9'},
+  comm:{label:'Communication',icon:'💬',color:'#8b5cf6'},
+  expense:{label:'Expense',icon:'💵',color:'#22c55e'},
+  journal:{label:'Child note',icon:'🧒',color:'#f59e0b'},
+  conflict:{label:'Conflict',icon:'🔥',color:'#f97316'},
+  support:{label:'Caregiving',icon:'🤝',color:'#10b981'},
+  day:{label:'Parenting day',icon:'📅',color:'#14b8a6'}
+};
+const TAGS=['Safety','Schedule compliance','Communication','Health / medical','Education','Child stability','Substance concern','Child’s statements','Financial support','Alienation concern','Relocation','Third party','Positive parenting'];
+const TOPICS=['Schedule / exchanges','Money / expenses','Parenting decisions','Child’s health or school','Tone / communication','Boundaries','New partner or third party','Other'];
+const CF_RESP={calm:'Stayed calm / BIFF reply',boundary:'Set a boundary',disengaged:'Walked away / disengaged',ignored:'Did not respond',inkind:'Responded in kind',other:'Other'};
+const CF_OUT={resolved:'Resolved',unresolved:'Unresolved',ongoing:'Ongoing',escalated:'Escalated further',silent:'Went silent'};
+const CF_CH={text:'Text',email:'Email',app:'Co-parenting app',call:'Phone call',inperson:'In person',viachild:'Through the child',third:'Via third party'};
+const CF_ESC=['','1 · Disagreement','2 · Heated','3 · Yelling / insults','4 · Threats / intimidation','5 · Safety concern'];
+const CF_OPEN=['unresolved','ongoing','escalated'];
+let CF_TOPIC='';
+const SUPPORT_ACTIONS=['School drop-off','School pickup','Took to dentist','Took to doctor','Gave money (school lunch)','Gave money (gas)','Gave money (other)','Bought clothes / supplies','Homework help','Drove to activity','Attended game / event','Cooked meal','Cared for sick child','Childcare / babysitting','Other'];
+const QUICK=['School drop-off','School pickup','Took to dentist','Gave money (school lunch)','Gave money (gas)','Homework help','Drove to activity'];
+const DAYN=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const WHO={other:'Other parent',me:'Me',both:'Both',third:'Third party',unknown:'Unknown'};
+
+/* ---------- storage (IndexedDB) ---------- */
+const DB={
+  db:null,mem:null,
+  open(){return new Promise((res,rej)=>{if(!window.indexedDB)return rej(new Error('IndexedDB unavailable'));setTimeout(()=>rej(new Error('Storage timed out')),4000);let r;try{r=indexedDB.open('custody-ledger',1)}catch(e){return rej(e)}
+    r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('kv');d.createObjectStore('blobs');d.createObjectStore('ledger',{keyPath:'seq'})};
+    r.onsuccess=()=>{this.db=r.result;res()};r.onerror=()=>rej(r.error)})},
+  tx(store,mode,fn){if(this.mem)return Promise.resolve(this.memTx(store,fn));return new Promise((res,rej)=>{const t=this.db.transaction(store,mode);const s=t.objectStore(store);const out=fn(s);t.oncomplete=()=>res(out&&out.result!==undefined?out.result:out);t.onerror=()=>rej(t.error)})},
+  memTx(store,fn){const m=this.mem[store];const shim={put:(v,k)=>{m.set(store==='ledger'?v.seq:k,v);return {result:undefined}},clear:()=>{m.clear();return {result:undefined}}};return fn(shim)},
+  get(store,k){if(this.mem)return Promise.resolve(this.mem[store].get(k));return new Promise((res,rej)=>{const r=this.db.transaction(store).objectStore(store).get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})},
+  put(store,v,k){return this.tx(store,'readwrite',s=>k===undefined?s.put(v):s.put(v,k))},
+  all(store){if(this.mem)return Promise.resolve([...this.mem[store].values()]);return new Promise((res,rej)=>{const r=this.db.transaction(store).objectStore(store).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})},
+  clear(store){return this.tx(store,'readwrite',s=>s.clear())}
+};
+
+/* ---------- state ---------- */
+const DEFAULT_SETTINGS={me:'Me',other:'Other parent',children:[],caseNo:'',court:'',pin:null,salt:null,lastBackup:null,created:new Date().toISOString()};
+let SET={...DEFAULT_SETTINGS};
+let LEDGER=[],ENT=[],SCHEDS=[],ACT=new Map(),CHAIN_OK=true,CHAIN_MSG='';
+let ROUTE='home',FILTER={q:'',kind:'',tag:'',from:'',to:''};
+let calMonth=dkey(new Date()).slice(0,7);
+
+async function saveSettings(){await DB.put('kv',SET,'settings')}
+async function loadAll(){
+  const s=await DB.get('kv','settings');if(s)SET={...DEFAULT_SETTINGS,...s};
+  LEDGER=(await DB.all('ledger')).sort((a,b)=>a.seq-b.seq);
+  rebuild();await verifyChain();
+}
+const head=()=>LEDGER.length?LEDGER[LEDGER.length-1].hash:'GENESIS';
+let _q=Promise.resolve();
+function append(op,eid,data){const run=()=>appendNow(op,eid,data);const p=_q.then(run,run);_q=p.catch(()=>{});return p}
+async function appendNow(op,eid,data){
+  const ev={id:uid(),seq:LEDGER.length+1,ts:new Date().toISOString(),op,eid,data,prev:head()};
+  ev.hash=await sha(canon(ev));
+  await Promise.race([DB.put('ledger',ev),new Promise((_,rj)=>setTimeout(()=>rj(new Error('Storage did not respond')),8000))]);
+  LEDGER.push(ev);if(CHAIN_OK)CHAIN_MSG=`${LEDGER.length} records verified`;rebuild();return ev;
+}
+async function verifyLedgerArray(arr){
+  let prev='GENESIS';
+  for(const ev of arr){
+    const {hash,...rest}=ev;
+    if(rest.prev!==prev||await sha(canon(rest))!==hash)return {ok:false,at:ev.seq};
+    prev=hash;
+  }
+  return {ok:true,head:prev};
+}
+async function verifyChain(){
+  const r=await verifyLedgerArray(LEDGER);
+  if(!r.ok){CHAIN_OK=false;CHAIN_MSG=`Break detected at record #${r.at}`;return false}
+  CHAIN_OK=true;CHAIN_MSG=LEDGER.length?`${LEDGER.length} records verified`:'No records yet';return true;
+}
+function rebuild(){
+  const m=new Map();
+  for(const ev of LEDGER){
+    if(ev.op==='create'){m.set(ev.eid,{...ev.data,id:ev.eid,created:ev.ts,seq:ev.seq,hash:ev.hash,amends:[],voided:null,att:[...(ev.data.att||[])]})}
+    else if(ev.op==='amend'){const e=m.get(ev.eid);if(e){e.amends.push({ts:ev.ts,seq:ev.seq,changes:ev.data.changes,reason:ev.data.reason,added:(ev.data.addAtt||[]).length});Object.assign(e,ev.data.changes);if(ev.data.addAtt)e.att.push(...ev.data.addAtt)}}
+    else if(ev.op==='void'){const e=m.get(ev.eid);if(e)e.voided={ts:ev.ts,reason:ev.data.reason,seq:ev.seq}}
+  }
+  ENT=[...m.values()];
+  SCHEDS=ENT.filter(e=>e.kind==='schedule'&&!e.voided).sort((a,b)=>a.effective.localeCompare(b.effective)||a.seq-b.seq);
+  ACT=new Map();
+  ENT.filter(e=>e.kind==='day'&&!e.voided).sort((a,b)=>a.seq-b.seq).forEach(e=>ACT.set(e.date,e));
+}
+const entries=()=>ENT.filter(e=>e.kind!=='schedule').sort((a,b)=>(b.occurred||'').localeCompare(a.occurred||'')||b.seq-a.seq);
+const live=()=>entries().filter(e=>!e.voided);
+
+/* ---------- schedule helpers ---------- */
+function planned(dk){
+  let s=null;for(const x of SCHEDS){if(x.effective<=dk)s=x}
+  if(!s)return '';
+  const d=daysBetween(s.anchor,dk);
+  const wk=s.alternate?(((Math.floor(d/7)%2)+2)%2):0;
+  const dow=(dfrom(dk).getDay()+6)%7;
+  return (s.weeks[wk]||[])[dow]||'';
+}
+const actual=dk=>ACT.get(dk)?.actual||'';
+function timeStats(from,to){
+  let n=0,pMe=0,aMe=0,aOther=0,aSplit=0,diff=0,logged=0,pLogged=0,unlogged=0;
+  for(let k=from;k<=to;k=addDays(k,1)){
+    const a=actual(k),p=planned(k);n++;
+    if(a){logged++;if(a==='me')aMe++;else if(a==='other')aOther++;else aSplit++;
+      if(p){pLogged++;if(p==='me')pMe++;else if(p==='split')pMe+=.5;if(p!==a)diff++}}
+    else unlogged++;
+  }
+  const nights=aMe+aOther+aSplit;
+  return {days:n,logged,unlogged,aMe,aOther,aSplit,mePct:nights?Math.round((aMe+aSplit/2)/nights*100):null,
+    plannedMePct:pLogged?Math.round(pMe/pLogged*100):null,variance:diff,pLogged};
+}
+
+/* ---------- objectivity linter ---------- */
+const LOADED=['crazy','insane','psycho','psychotic','liar','lying','lies','lied','stupid','idiot','moron','selfish','manipulative','manipulating','toxic','narcissist','narcissistic','abusive','pathetic','worthless','disgusting','evil','hate','bitch','asshole','jerk','unfit','irresponsible','petty','vindictive','spiteful','controlling','gaslighting','gaslight','terrible','awful','horrible','ridiculous','useless','harassing','harassment'];
+const MIND=[/\b(on purpose|deliberately|purposely|intentionally)\b/i,/\bjust (wants|wanted|trying|likes)\b/i,/\b(trying|wants?) to (hurt|punish|control|manipulate|get back|spite)\b/i,/\bknows? (full well|that I)\b/i,/\bobviously\b/i,/\bclearly\b/i];
+const ABS=/\b(always|never|every single time|every time|constantly|all the time|nobody|everyone)\b/i;
+function lint(text){
+  const out=[],t=text||'';
+  if(!t.trim())return {issues:[],good:[],empty:true};
+  const words=t.toLowerCase().match(/[a-z']+/g)||[];
+  const hit=[...new Set(words.filter(w=>LOADED.includes(w)))];
+  if(hit.length)out.push({k:'label',m:`Loaded words: “${hit.join('”, “')}”`,tip:'Describe the behavior instead (what was said or done) — judges discount labels.'});
+  MIND.forEach(r=>{const m=t.match(r);if(m)out.push({k:'mind',m:`Assumes intent: “${m[0]}”`,tip:'You can’t prove what someone intended. State what happened and let the facts speak.'})});
+  const ab=t.match(ABS);if(ab)out.push({k:'abs',m:`Absolute: “${ab[0]}”`,tip:'Use counts or dates (“3 of the last 4 exchanges”) — numbers are credible, absolutes aren’t.'});
+  if((t.match(/!/g)||[]).length>=2)out.push({k:'emo',m:'Multiple exclamation marks',tip:'Keep the tone flat; emotion reads as bias in a record.'});
+  const caps=(t.match(/\b[A-Z]{4,}\b/g)||[]);if(caps.length)out.push({k:'emo',m:`ALL CAPS: ${caps.slice(0,3).join(', ')}`,tip:'Shouting weakens a record. Lowercase it.'});
+  const good=[];
+  if(/\b\d{1,2}(:\d{2})?\s?(am|pm|a\.m\.|p\.m\.)\b|\b\d{1,2}:\d{2}\b/i.test(t))good.push('time stated');
+  if(/["“”]/.test(t))good.push('exact words quoted');
+  if(/\b(at|in|outside|inside|near)\s+(the\s+)?[A-Z][a-z]+/.test(t)||/\b(school|home|house|park|parking lot|library|police|store|restaurant)\b/i.test(t))good.push('place stated');
+  if(/\b(witness|present|saw|heard)\b/i.test(t))good.push('witness mentioned');
+  return {issues:out,good,empty:false};
+}
+function lintHTML(text){
+  const r=lint(text);
+  if(r.empty)return '<span class="mute">Objectivity check appears as you type. Facts: who, what, when, where, exact quotes.</span>';
+  let h='';
+  if(!r.issues.length)h+='<div class="ok">✓ Reads as factual</div>';
+  r.issues.forEach(i=>h+=`<div class="w"><b>${esc(i.m)}</b><br><span class="mute">${esc(i.tip)}</span></div>`);
+  if(r.good.length)h+=`<div class="mute small" style="margin-top:6px">Strong details: ${r.good.join(' · ')}</div>`;
+  else h+='<div class="mute small" style="margin-top:6px">Add specifics: time, place, exact quotes, who saw it.</div>';
+  return h;
+}
+
+/* ---------- form definitions ---------- */
+const F={
+ incident:[
+  {n:'who',t:'select',l:'Who was involved',o:Object.entries(WHO),d:'other'},
+  {n:'severity',t:'select',l:'Severity',o:[[1,'Minor'],[2,'Moderate'],[3,'Serious']],d:1},
+  {n:'body',t:'textarea',l:'What happened — facts only',lint:1,ph:'Who, what, when, where. Quote exact words. Describe actions, not opinions.'},
+  {n:'witnesses',t:'text',l:'Witnesses / others present'},
+  {n:'impact',t:'text',l:'Observable effect on the child (if any)'},
+  {n:'childPresent',t:'check',l:'Child was present or aware'}],
+ exchange:[
+  {n:'dir',t:'select',l:'Exchange type',o:[['pickup','Pick-up (child comes to me)'],['dropoff','Drop-off (child goes to other parent)']],d:'pickup'},
+  {n:'status',t:'select',l:'Outcome',o:[['completed','Completed on time'],['late_other','Other parent late'],['late_me','I was late'],['noshow_other','Other parent no-show'],['noshow_me','I did not attend'],['cancelled_other','Cancelled by other parent'],['cancelled_me','Cancelled by me'],['denied','Parenting time denied'],['rescheduled','Rescheduled by agreement']],d:'completed'},
+  {n:'place',t:'text',l:'Location'},
+  {n:'schedAt',t:'datetime',l:'Scheduled time'},
+  {n:'myArrive',t:'datetime',l:'I arrived',opt:1},
+  {n:'theirArrive',t:'datetime',l:'Other parent arrived',opt:1},
+  {n:'body',t:'textarea',l:'Notes (facts only)',lint:1}],
+ comm:[
+  {n:'channel',t:'select',l:'Channel',o:[['text','Text'],['email','Email'],['app','Co-parenting app'],['call','Phone call'],['voicemail','Voicemail'],['inperson','In person'],['third','Via third party']],d:'text'},
+  {n:'dir',t:'select',l:'Direction',o:[['in','From other parent to me'],['out','From me to other parent']],d:'in'},
+  {n:'tone',t:'select',l:'Tone',o:[[1,'Civil'],[2,'Curt / dismissive'],[3,'Hostile / threatening']],d:1},
+  {n:'repliedAt',t:'datetime',l:'Replied at (to measure response time)',opt:1},
+  {n:'body',t:'textarea',l:'Exact words or summary',lint:1,ph:'Paste the message or quote what was said.'}],
+ expense:[
+  {n:'amount',t:'number',l:'Amount ($)'},
+  {n:'category',t:'select',l:'Category',o:['Medical','Dental','Vision','Childcare','Education','Activities','Clothing','Transportation','Other'].map(x=>[x,x]),d:'Medical'},
+  {n:'paidBy',t:'select',l:'Paid by',o:[['me','Me'],['other','Other parent']],d:'me'},
+  {n:'myShare',t:'number',l:'My share of this expense (%)',d:50},
+  {n:'reimb',t:'select',l:'Reimbursement',o:[['pending','Not yet requested'],['requested','Requested'],['paid','Paid / settled'],['disputed','Disputed']],d:'pending'},
+  {n:'body',t:'textarea',l:'Notes',lint:0}],
+ conflict:[
+  {n:'topic',t:'select',l:'Topic',o:TOPICS.map(x=>[x,x]),d:TOPICS[0]},
+  {n:'escalation',t:'select',l:'How far it escalated',o:[1,2,3,4,5].map(i=>[i,CF_ESC[i]]),d:1},
+  {n:'trigger',t:'text',l:'What set it off',ph:'e.g. asked to swap Friday pickup'},
+  {n:'channel',t:'select',l:'Where it happened',o:Object.entries(CF_CH),d:'text'},
+  {n:'startedBy',t:'select',l:'Who started it',o:[['other','Other parent'],['me','Me'],['unclear','Unclear']],d:'other'},
+  {n:'response',t:'select',l:'How I responded',o:Object.entries(CF_RESP),d:'calm'},
+  {n:'deesc',t:'text',l:'What I tried to calm it down (optional)'},
+  {n:'outcome',t:'select',l:'Where it stands now',o:Object.entries(CF_OUT),d:'unresolved'},
+  {n:'body',t:'textarea',l:'What happened — facts only',lint:1,ph:'Who said or did what, when, where. Exact words in quotes.'},
+  {n:'followUp',t:'text',l:'Next step (optional)'},
+  {n:'childInvolved',t:'check',l:'Child heard it, saw it, or was pulled into it'}],
+ support:[
+  {n:'action',t:'select',l:'What you did',o:SUPPORT_ACTIONS.map(x=>[x,x]),d:'School drop-off'},
+  {n:'who',t:'select',l:'Done by',o:[['me','Me'],['other','Other parent']],d:'me'},
+  {n:'amount',t:'number',l:'Money given or spent ($, optional)'},
+  {n:'body',t:'textarea',l:'Details (optional)'}],
+ journal:[
+  {n:'mood',t:'select',l:'Child’s mood / presentation',o:[[5,'Happy, relaxed'],[4,'Good'],[3,'Neutral'],[2,'Withdrawn / upset'],[1,'Distressed']],d:3},
+  {n:'quote',t:'text',l:'Child’s own words (exact quote)',ph:'Only what they said unprompted — never coach or question.'},
+  {n:'body',t:'textarea',l:'Observations (sleep, eating, health, school, behavior)',lint:1}]
+};
+
+/* ---------- sheet ---------- */
+function openSheet(title,html,after){
+  $('#sheet').innerHTML=`<header><h2>${esc(title)}</h2><button class="x" data-act="close">✕</button></header><div class="body">${html}</div>`;
+  $('#sheetWrap').classList.add('on');if(after)after($('#sheet'));
+}
+function closeSheet(){$('#sheetWrap').classList.remove('on');$('#sheet').innerHTML=''}
+$('#sheetWrap').addEventListener('click',e=>{if(e.target.id==='sheetWrap')closeSheet()});
+
+function fieldHTML(f,v){
+  const val=v??f.d??'';
+  if(f.t==='textarea')return `<label class="f"><span>${f.l}</span><textarea name="${f.n}" ${f.lint?'data-lint="1"':''} placeholder="${esc(f.ph||'')}">${esc(val)}</textarea></label>${f.lint?`<div class="lint" id="lint-${f.n}">${lintHTML(val)}</div>`:''}`;
+  if(f.t==='select')return `<label class="f"><span>${f.l}</span><select name="${f.n}">${f.o.map(([k,l])=>`<option value="${esc(k)}" ${String(k)===String(val)?'selected':''}>${esc(l)}</option>`).join('')}</select></label>`;
+  if(f.t==='check')return `<label class="ck"><input type="checkbox" name="${f.n}" ${val?'checked':''}> ${f.l}</label>`;
+  if(f.t==='datetime')return `<label class="f"><span>${f.l}</span><div class="row"><input type="datetime-local" name="${f.n}" value="${esc(val)}"><button type="button" class="btn ghost sm" data-act="nowfill" data-n="${f.n}">Now</button></div></label>`;
+  if(f.t==='number')return `<label class="f"><span>${f.l}</span><input name="${f.n}" type="number" inputmode="decimal" step="0.01" value="${esc(val)}"></label>`;
+  return `<label class="f"><span>${f.l}</span><input name="${f.n}" type="text" value="${esc(val)}" placeholder="${esc(f.ph||'')}"></label>`;
+}
+function chipsHTML(name,list,sel){return `<div class="f"><span class="mute small" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em">${name==='tags'?'Best-interest factors':'Children involved'}</span><div class="chips" style="margin-top:5px" data-chips="${name}">${list.map(x=>`<button type="button" class="chip ${sel.includes(x.v)?'on':''}" data-act="chip" data-v="${esc(x.v)}">${esc(x.l)}</button>`).join('')}</div></div>`}
+
+function entryForm(kind,e,pre){
+  const amend=!!e;const now=lnow();
+  const f=F[kind];
+  const kids=SET.children.map(c=>({v:c.id,l:c.name}));
+  const top=`<label class="f"><span>When it happened</span><div class="row"><input type="datetime-local" name="occurred" value="${esc(e?.occurred||now)}"><button type="button" class="btn ghost sm" data-act="nowfill" data-n="occurred">Now</button></div></label>
+  <label class="f"><span>Short title</span><input name="title" value="${esc(e?.title||'')}" placeholder="Optional — auto-filled if blank"></label>
+  <label class="f"><span>Corroborated by (optional)</span><input name="source" value="${esc(e?.source||pre?.source||'')}" placeholder="school email, receipt, witness"></label>`;
+  let h=`<form id="ef" data-kind="${kind}" ${amend?`data-eid="${e.id}"`:''}>${top}`;
+  if(kind==='conflict')h+=`<p class="small mute" style="margin:-4px 0 12px">Record your own part honestly, including when you reacted badly. A candid record is more credible than a flawless one. If you or the children are in danger, call 911.</p>`;
+  if(kind==='support')h+=`<p class="small mute" style="margin:-4px 0 12px">Log anything you do for the kids, including on the other parent’s days. Together these show who is actually showing up.</p>`;
+  f.forEach(x=>{h+=fieldHTML(x,e?e[x.n]:pre?pre[x.n]:undefined)});
+  if(kids.length)h+=chipsHTML('children',kids,e?.children||[]);
+  if(kind!=='expense')h+=chipsHTML('tags',TAGS.map(t=>({v:t,l:t})),e?.tags||[]);
+  h+=`<label class="f"><span>${amend?'Add attachments':'Attach photos, screenshots, PDFs, audio'}</span><input type="file" name="files" multiple accept="image/*,application/pdf,audio/*,video/*"></label>`;
+  if(kind==='incident'||kind==='exchange')h+=`<div class="row wrap" style="margin-bottom:12px"><button type="button" class="btn ghost sm" data-act="geo">📍 Stamp my location</button><span class="small mute" id="geoOut">${e?.loc?`${e.loc.lat.toFixed(5)}, ${e.loc.lon.toFixed(5)} (±${Math.round(e.loc.acc)}m)`:''}</span></div>`;
+  if('webkitSpeechRecognition' in window||'SpeechRecognition' in window)h+=`<div class="row" style="margin-bottom:12px"><button type="button" class="btn ghost sm" data-act="dictate">🎙 Dictate into notes</button><span class="small mute" id="dictOut"></span></div>`;
+  if(amend)h+=`<label class="f"><span>Reason for amendment (required)</span><input name="reason" placeholder="e.g. corrected time, added detail"></label><p class="small mute">The original is never overwritten. Your change is added to the record with the date and reason.</p>`;
+  h+=`<button class="btn" style="width:100%" type="submit">${amend?'Save amendment':'Save to ledger'}</button></form>`;
+  return h;
+}
+function openEntry(kind,e,pre){
+  openSheet((e?'Amend ':'New ')+KINDS[kind].label.toLowerCase(),entryForm(kind,e,pre),sh=>{
+    $('#ef',sh).addEventListener('submit',ev=>{ev.preventDefault();saveEntry($('#ef'))});
+    window._geo=e?.loc||null;
+  });
+}
+function readForm(form){
+  const kind=form.dataset.kind,d={};
+  $$('input,select,textarea',form).forEach(el=>{
+    if(!el.name||el.name==='files'||el.name==='reason')return;
+    d[el.name]=el.type==='checkbox'?el.checked:el.value;
+  });
+  ['severity','tone','mood','escalation'].forEach(k=>{if(d[k]!==undefined)d[k]=Number(d[k])});
+  ['amount','myShare'].forEach(k=>{if(d[k]!==undefined)d[k]=d[k]===''?null:Number(d[k])});
+  $$('[data-chips]',form).forEach(c=>{d[c.dataset.chips]=$$('.chip.on',c).map(x=>x.dataset.v)});
+  if(window._geo)d.loc=window._geo;
+  return d;
+}
+async function saveFiles(files){
+  const att=[];
+  for(const f of files){
+    const buf=await f.arrayBuffer();const id=uid();
+    await DB.put('blobs',{id,type:f.type,name:f.name,data:buf},id);
+    att.push({id,name:f.name,type:f.type,size:f.size,hash:await shaBuf(buf)});
+  }
+  return att;
+}
+async function saveEntry(form){
+  const kind=form.dataset.kind,eid=form.dataset.eid,d=readForm(form);
+  const files=$('input[name=files]',form).files;
+  const btn=$('button[type=submit]',form);btn.disabled=true;
+  try{
+    const att=await saveFiles(files);
+    if(eid){
+      const cur=ENT.find(e=>e.id===eid),reason=$('[name=reason]',form).value.trim();
+      if(!reason){toast('Add a reason for the amendment');btn.disabled=false;return}
+      const changes={};
+      for(const k of Object.keys(d)){const nv=d[k],ov=cur[k];if(k==='title'&&!nv)continue;
+        const same=(nv===false&&ov===undefined)||(nv===''&&ov===undefined)||canon(nv)===canon(ov===undefined&&Array.isArray(nv)?[]:ov);if(!same)changes[k]=nv}
+      if(!Object.keys(changes).length&&!att.length){toast('Nothing changed');btn.disabled=false;return}
+      await append('amend',eid,{changes,reason,addAtt:att});toast('Amendment recorded');
+    }else{
+      if(!d.title){const src=kind==='conflict'?`${d.topic}${d.trigger?': '+d.trigger:''}`:kind==='support'?`${d.action}${d.amount?' · '+money(d.amount):''}`:(d.body||d.quote||(kind==='expense'?`${d.category} ${money(d.amount||0)}`:'')||KINDS[kind].label);d.title=shortTitle(src)}
+      d.kind=kind;d.att=att;
+      if(kind==='exchange'&&!d.schedAt)delete d.schedAt;
+      ['myArrive','theirArrive','repliedAt'].forEach(k=>{if(d[k]==='')delete d[k]});
+      await append('create',uid(),d);toast('Saved · hash-chained');
+    }
+    closeSheet();try{render()}catch(e){console.error(e)}
+  }catch(err){
+    console.error(err);btn.disabled=false;
+    let eb=$('#formErr',form);if(!eb){eb=document.createElement('div');eb.id='formErr';eb.style.cssText='color:var(--bad);font-weight:700;margin:0 0 10px';form.insertBefore(eb,btn)}
+    eb.textContent='Could not save: '+err.message;toast('Save failed: '+err.message,5000);
+  }
+}
+
+/* ---------- detail ---------- */
+const STATUS_L={completed:'Completed on time',late_other:'Other parent late',late_me:'I was late',noshow_other:'Other parent no-show',noshow_me:'I did not attend',cancelled_other:'Cancelled by other parent',cancelled_me:'Cancelled by me',denied:'Parenting time denied',rescheduled:'Rescheduled by agreement'};
+function lateMin(s,a){return s&&a?Math.round((new Date(a)-new Date(s))/60000):null}
+function fieldsList(e){
+  const r=[];const kid=ids=>(ids||[]).map(i=>SET.children.find(c=>c.id===i)?.name).filter(Boolean).join(', ');
+  const add=(l,v)=>{if(v!==undefined&&v!==null&&v!==''&&!(Array.isArray(v)&&!v.length))r.push([l,v])};
+  add('Occurred',fDT(e.occurred));
+  if(e.kind==='incident'){add('Involved',WHO[e.who]);add('Severity',['','Minor','Moderate','Serious'][e.severity]);add('Witnesses',e.witnesses);add('Effect on child',e.impact);add('Child present',e.childPresent?'Yes':'')}
+  if(e.kind==='exchange'){add('Type',e.dir==='pickup'?'Pick-up':'Drop-off');add('Outcome',STATUS_L[e.status]);add('Location',e.place);add('Scheduled',fDT(e.schedAt));
+    add('I arrived',e.myArrive?`${fTime(e.myArrive)} (${fmtLate(lateMin(e.schedAt,e.myArrive))})`:'');
+    add('Other parent arrived',e.theirArrive?`${fTime(e.theirArrive)} (${fmtLate(lateMin(e.schedAt,e.theirArrive))})`:'')}
+  if(e.kind==='comm'){add('Channel',e.channel);add('Direction',e.dir==='in'?'From other parent':'From me');add('Tone',['','Civil','Curt','Hostile'][e.tone]);add('Replied',fDT(e.repliedAt))}
+  if(e.kind==='expense'){add('Amount',money(e.amount||0));add('Category',e.category);add('Paid by',e.paidBy==='me'?'Me':'Other parent');add('My share',(e.myShare??50)+'%');add('Reimbursement',e.reimb)}
+  if(e.kind==='journal'){add('Mood',['','Distressed','Withdrawn / upset','Neutral','Good','Happy, relaxed'][e.mood]);add('Child’s words',e.quote?`“${e.quote}”`:'')}
+  if(e.kind==='conflict'){add('Topic',e.topic);add('Escalation',CF_ESC[e.escalation]);add('Trigger',e.trigger);add('Where',CF_CH[e.channel]);add('Started by',{other:SET.other,me:SET.me,unclear:'Unclear'}[e.startedBy]);add('My response',CF_RESP[e.response]);add('Tried to de-escalate',e.deesc);add('Status',CF_OUT[e.outcome]);add('Next step',e.followUp);add('Child involved',e.childInvolved?'Yes':'')}
+  if(e.kind==='support'){add('Done by',e.who==='me'?SET.me:SET.other);add('Action',e.action);add('Amount',e.amount?money(e.amount):'');add('During',duringLabel(e))}
+  if(e.kind==='day'){add('Who had the child',{me:SET.me,other:SET.other,split:'Split'}[e.actual]);add('Planned',({me:SET.me,other:SET.other,split:'Split'}[planned(e.date)])||'—')}
+  add('Children',kid(e.children));add('Factors',(e.tags||[]).join(', '));add('Corroborated by',e.source);
+  if(e.loc)add('Location stamp',`${e.loc.lat.toFixed(5)}, ${e.loc.lon.toFixed(5)} (±${Math.round(e.loc.acc)} m)`);
+  return r;
+}
+function duringLabel(e){const k=(e.occurred||'').slice(0,10),a=actual(k)||planned(k);return a==='other'?SET.other+'’s time':a==='me'?'My time':a==='split'?'Split day':''}
+const fmtLate=m=>m===null?'':m<=0?(m===0?'on time':`${-m} min early`):`${m} min late`;
+
+async function blobURL(id){const b=await DB.get('blobs',id);return b?{url:URL.createObjectURL(new Blob([b.data],{type:b.type})),b}:null}
+async function openDetail(id){
+  const e=ENT.find(x=>x.id===id);if(!e)return;
+  const rows=fieldsList(e).map(([l,v])=>`<tr><td class="mute small" style="padding:4px 12px 4px 0;white-space:nowrap;vertical-align:top">${l}</td><td>${esc(v)}</td></tr>`).join('');
+  const am=realAmends(e).map(a=>`<div class="small" style="margin:6px 0"><b>Amended ${fTS(a.ts)}</b> — ${esc(a.reason)} <span class="mute">(changed: ${Object.keys(a.changes).join(', ')||'attachments only'}${a.added?`; +${a.added} file(s)`:''})</span></div>`).join('');
+  openSheet(KINDS[e.kind].label,`
+   <div class="row" style="margin-bottom:8px"><span style="font-size:26px">${KINDS[e.kind].icon}</span><h3 class="${e.voided?'void':''}">${esc(e.title)}</h3></div>
+   ${e.voided?`<div class="badge r" style="margin-bottom:8px">VOIDED ${fTS(e.voided.ts)} — ${esc(e.voided.reason)}</div>`:''}
+   <table>${rows}</table>
+   ${e.body?`<div class="card flat" style="margin-top:10px;white-space:pre-wrap">${esc(e.body)}</div>`:''}
+   <div id="atts" class="row wrap" style="margin:10px 0"></div>
+   ${am?`<h3 style="margin-top:12px">Amendment history</h3>${am}`:''}
+   <div class="small mute" style="margin:12px 0;word-break:break-all">Record #${e.seq} · logged ${fTS(e.created)}<br>SHA-256 ${e.hash}</div>
+   <div class="row wrap">${e.kind==='day'?'':`<button class="btn" data-act="amend" data-id="${e.id}">Amend</button><button class="btn ghost" data-act="togglekey" data-id="${e.id}">${e.key?'★ Key entry (tap to unmark)':'☆ Mark as key entry'}</button>`}${e.voided?'':`<button class="btn ghost" data-act="void" data-id="${e.id}">Void entry</button>`}</div>`,async sh=>{
+    for(const a of e.att||[]){
+      const r=await blobURL(a.id);if(!r)continue;
+      const box=$('#atts',sh);
+      if(a.type.startsWith('image/'))box.insertAdjacentHTML('beforeend',`<a href="${r.url}" target="_blank"><img src="${r.url}" style="width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--line)"></a>`);
+      else box.insertAdjacentHTML('beforeend',`<a class="chip" href="${r.url}" target="_blank" download="${esc(a.name)}">📎 ${esc(a.name)}</a>`);
+    }
+  });
+}
+
+/* ---------- views ---------- */
+const NAV=[['home','🏠','Home'],['timeline','🗂','Timeline'],['calendar','📅','Calendar'],['insights','📊','Insights'],['conflict','🔥','Conflict'],['report','📄','Report'],['tools','🛠','Reply helper'],['settings','⚙️','Settings']];
+function renderNav(){
+  $('#side').innerHTML=`<div class="brand">⚖️ Custody Ledger</div>`+NAV.map(([k,i,l])=>`<button class="${ROUTE===k?'on':''}" data-act="go" data-r="${k}"><span>${i}</span>${l}</button>`).join('')+'<div style="flex:1"></div><button data-act="lock"><span>🔒</span>Lock</button>';
+  const m=[['home','🏠','Home'],['timeline','🗂','Timeline'],['calendar','📅','Calendar'],['insights','📊','Insights'],['more','⋯','More']];
+  const moreOn=['conflict','report','tools','settings','more'].includes(ROUTE);
+  $('#bar').innerHTML=m.map(([k,i,l])=>`<button class="${(k==='more'?moreOn:ROUTE===k)?'on':''}" data-act="go" data-r="${k}"><span>${i}</span>${l}</button>`).join('');
+}
+const BANNER='<div class="card" style="border-color:var(--warn)"><b style="color:var(--warn)">⚠ Storage is blocked here</b><div class="small">This browser is not letting the app save data, so nothing is kept after you close the page. Open the file directly in Safari or Chrome (not inside a preview pane or private window), or host it at an https address. You can keep using it and export a backup before you leave.</div></div>';
+function render(keep){clearInterval(window._cd);renderNav();const v={home:vHome,timeline:vTimeline,calendar:vCalendar,insights:vInsights,conflict:vConflict,report:vReport,tools:vTools,settings:vSettings,more:vMore}[ROUTE]||vHome;$('#main').innerHTML=(DB.mem?BANNER:'')+v();if(!keep)window.scrollTo(0,0);afterRender()}
+function afterRender(){if(ROUTE==='insights'){/* static */}}
+const realAmends=e=>e.amends.filter(a=>!(Object.keys(a.changes||{}).length===1&&'key' in a.changes));
+function item(e){
+  const k=KINDS[e.kind];const tags=(e.tags||[]).slice(0,2).map(t=>`<span class="badge">${esc(t)}</span>`).join(' ');
+  const sev=e.kind==='conflict'?`<span class="badge ${e.escalation>=4?'r':e.escalation===3?'y':''}">Level ${e.escalation}</span><span class="badge ${CF_OPEN.includes(e.outcome)?'y':'g'}">${CF_OUT[e.outcome]}</span>`:e.kind==='incident'?`<span class="badge ${e.severity>=3?'r':e.severity===2?'y':''}">${['','Minor','Moderate','Serious'][e.severity]}</span>`:'';
+  const att=(e.att||[]).length?`<span class="badge">📎 ${e.att.length}</span>`:'';
+  const am=realAmends(e).length?`<span class="badge y">amended</span>`:'';
+  return `<div class="item" data-act="detail" data-id="${e.id}"><div class="ic">${k.icon}</div><div class="grow"><div class="t ${e.voided?'void':''}">${e.key?'★ ':''}${esc(e.title)}</div><div class="s">${esc(e.body||e.quote||'')}</div><div class="row wrap small" style="margin-top:4px;gap:6px"><span class="mute">${fDT(e.occurred)}</span>${sev}${tags}${att}${am}${e.voided?'<span class="badge r">void</span>':''}</div></div></div>`;
+}
+function vHome(){
+  const today=dkey(new Date());
+  const pl=planned(today),ac=actual(today);
+  const nm={me:SET.me,other:SET.other,split:'Split'};
+  const last=live().filter(e=>e.kind!=='day').slice(0,5);
+  let alerts='';
+  const missing=[];for(let i=1;i<=7;i++){const k=addDays(today,-i);if(!actual(k))missing.push(k)}
+  const daysSinceBackup=SET.lastBackup?Math.floor((Date.now()-new Date(SET.lastBackup))/864e5):null;
+  if(!CHAIN_OK)alerts+=`<div class="card" style="border-color:var(--bad)"><b style="color:var(--bad)">⚠ Integrity check failed</b><div class="small">${esc(CHAIN_MSG)}. Restore from your latest backup.</div></div>`;
+  if(LEDGER.length&&(daysSinceBackup===null||daysSinceBackup>=14))alerts+=`<div class="card"><b>Back up your record</b><div class="small mute">${daysSinceBackup===null?'You have never exported a backup.':`Last backup ${daysSinceBackup} days ago.`} Browser data can be lost; a backup file can’t.</div><button class="btn sm" style="margin-top:8px" data-act="backup">Export backup</button></div>`;
+  const miss=missing.slice(0,3).map(k=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="grow"><b>${fDate(k)}</b> <span class="mute small">${DAYN[(dfrom(k).getDay()+6)%7]}${planned(k)?` · planned: ${nm[planned(k)]}`:''}</span></div>${['me','other','split'].map(v=>`<button class="btn ghost sm" data-act="setday" data-date="${k}" data-val="${v}">${v==='split'?'Split':v==='me'?'Me':'Them'}</button>`).join('')}</div>`).join('');
+  return `<div class="row"><h1 class="grow">Custody Ledger</h1><button class="btn ghost sm homelock" data-act="lock">🔒 Lock</button></div>
+  <p class="mute" style="margin:4px 0 16px">Private. On this device only. Every entry is hash-chained so it can’t be quietly altered.</p>
+  ${alerts}
+  ${(!SET.children.length&&SET.me==='Me'&&!SCHEDS.length&&LEDGER.length<3)?`<div class="card"><h3>Set up in a minute</h3><div class="small mute" style="margin:2px 0 8px">Add your name, the children and your court-ordered schedule. Everything stays on this device.</div><button class="btn sm" data-act="go" data-r="settings">Open settings</button></div>`:''}
+  ${installTip()}
+  <div class="card"><div class="row"><div class="grow"><div class="mute small">TODAY · ${new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}</div>
+   <div style="font-size:18px;font-weight:800;margin-top:2px">${ac?`Logged: ${nm[ac]}`:pl?`Planned with ${nm[pl]}`:'No schedule set'}</div></div>
+   ${ac?'':['me','other','split'].map(v=>`<button class="btn ghost sm" data-act="setday" data-date="${today}" data-val="${v}">${v==='split'?'Split':v==='me'?'Me':'Them'}</button>`).join('')}</div></div>
+  <div class="card"><h3>Log it in one line</h3><div class="small mute" style="margin:2px 0 8px">Type or say what happened. It is sorted into the right entry for you to check.</div><div class="row"><input id="qc" placeholder="Gave Emma $300 for lunch" autocomplete="off"><button class="btn" data-act="qc">Log</button>${MIC?'<button class="btn ghost" data-act="qcdict" aria-label="Dictate">🎙</button>':''}</div></div>
+  <div class="qa" style="margin-bottom:14px">${['incident','exchange','comm','conflict','expense','journal','support'].map(k=>`<button data-act="new" data-k="${k}"><span>${KINDS[k].icon}</span>${KINDS[k].label}</button>`).join('')}<button data-act="go" data-r="tools"><span>✍️</span>Reply helper</button></div>
+  <div class="card"><h3>Quick caregiving log</h3><div class="small mute" style="margin:2px 0 8px">Tap what you did today — any day, including the other parent’s.</div><div class="chips">${QUICK.map(a=>`<button class="chip" data-act="new" data-k="support" data-pre="${esc(a)}">${esc(a)}</button>`).join('')}</div></div>
+  ${rsCard()}
+  ${missing.length?`<div class="card"><h3>Unlogged days — who had the kids?</h3><div class="small mute" style="margin-bottom:4px">Ten seconds a day builds an unassailable parenting-time record.</div>${miss}${missing.length>3?`<div class="small mute" style="margin-top:6px">+${missing.length-3} more this week — use the Calendar.</div>`:''}</div>`:''}
+  <div class="card"><div class="row"><h3 class="grow">Recent entries</h3><button class="btn ghost sm" data-act="go" data-r="timeline">All</button></div>${last.length?last.map(item).join(''):'<p class="mute">Nothing yet. Tap a button above to log your first entry.</p>'}</div>
+  <div class="small mute">Integrity: <b style="color:${CHAIN_OK?'var(--good)':'var(--bad)'}">${CHAIN_OK?'✓ ':''}${esc(CHAIN_MSG)}</b></div>`;
+}
+function vTimeline(){
+  let list=entries().filter(e=>e.kind!=='day');
+  const q=FILTER.q.toLowerCase();
+  if(q)list=list.filter(e=>JSON.stringify([e.title,e.body,e.quote,e.witnesses,e.place,e.tags]).toLowerCase().includes(q));
+  if(FILTER.kind)list=list.filter(e=>e.kind===FILTER.kind);
+  if(FILTER.tag)list=list.filter(e=>(e.tags||[]).includes(FILTER.tag));
+  if(FILTER.from)list=list.filter(e=>(e.occurred||'').slice(0,10)>=FILTER.from);
+  if(FILTER.to)list=list.filter(e=>(e.occurred||'').slice(0,10)<=FILTER.to);
+  let lastDay='';const rows=list.map(e=>{const d=(e.occurred||'').slice(0,10);let h='';if(d!==lastDay){lastDay=d;h=`<div class="mute small" style="font-weight:700;margin:14px 0 2px;text-transform:uppercase;letter-spacing:.05em">${fDate(d)}</div>`}return h+item(e)}).join('');
+  return `<div class="row"><h1 class="grow">Timeline</h1><button class="btn sm" data-act="newmenu">+ Add</button></div>
+  <div class="card" style="margin-top:12px"><input id="fq" placeholder="Search everything…" value="${esc(FILTER.q)}">
+   <div class="chips" style="margin:10px 0 6px"><button class="chip ${FILTER.kind===''?'on':''}" data-act="fkind" data-v="">All</button>${Object.entries(KINDS).filter(([k])=>k!=='day').map(([k,v])=>`<button class="chip ${FILTER.kind===k?'on':''}" data-act="fkind" data-v="${k}">${v.icon} ${v.label}</button>`).join('')}</div>
+   <div class="row wrap"><select id="ftag" style="width:auto;flex:1"><option value="">Any factor</option>${TAGS.map(t=>`<option ${FILTER.tag===t?'selected':''}>${esc(t)}</option>`).join('')}</select><input id="ffrom" type="date" value="${FILTER.from}" style="width:auto;flex:1"><input id="fto" type="date" value="${FILTER.to}" style="width:auto;flex:1"></div></div>
+  <div class="card">${rows||'<p class="mute">No entries match.</p>'}</div>`;
+}
+function vCalendar(){
+  const [y,m]=calMonth.split('-').map(Number);
+  const first=`${calMonth}-01`;const startDow=(dfrom(first).getDay()+6)%7;
+  const dim=new Date(y,m,0).getDate();
+  const cells=[];for(let i=0;i<startDow;i++)cells.push(addDays(first,i-startDow));
+  for(let i=0;i<dim;i++)cells.push(addDays(first,i));
+  while(cells.length%7)cells.push(addDays(cells[cells.length-1],1));
+  const col={me:'var(--me)',other:'var(--other)',split:'var(--split)'};
+  const inc=new Set(live().filter(e=>e.kind==='incident').map(e=>(e.occurred||'').slice(0,10)));
+  const today=dkey(new Date());
+  const grid=DAYN.map(d=>`<div class="h">${d}</div>`).join('')+cells.map(k=>{
+    const out=!k.startsWith(calMonth),a=actual(k),p=planned(k);
+    return `<div class="d ${out?'out':''} ${k===today?'today':''}" data-act="day" data-date="${k}">${+k.slice(8)}${a?`<div class="ac" style="background:${col[a]}"></div>`:''}${inc.has(k)?'<div class="dot"></div>':''}${p?`<div class="pl" style="background:${col[p]};opacity:.55"></div>`:''}</div>`}).join('');
+  const last=`${calMonth}-${pad(dim)}`;const endR=last<today?last:today;const st=endR<first?timeStats(first,addDays(first,-1)):timeStats(first,endR);
+  const title=new Date(y,m-1,1).toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  return `<div class="row"><h1 class="grow">${title}</h1><button class="btn ghost sm" data-act="cal" data-d="-1">‹</button><button class="btn ghost sm" data-act="cal" data-d="0">Today</button><button class="btn ghost sm" data-act="cal" data-d="1">›</button></div>
+  <div class="card" style="margin-top:12px"><div class="cal">${grid}</div>
+   <div class="legend small mute row wrap" style="margin-top:10px;gap:14px"><span><i style="background:var(--me)"></i>${esc(SET.me)}</span><span><i style="background:var(--other)"></i>${esc(SET.other)}</span><span><i style="background:var(--split)"></i>Split</span><span>Fill = actual · bottom stripe = planned · <span style="color:var(--bad)">●</span> incident</span></div></div>
+  <div class="grid g4"><div class="stat"><small>Logged</small><b>${st.logged}/${st.days}</b></div><div class="stat"><small>My actual time</small><b>${st.mePct===null?'—':st.mePct+'%'}</b></div><div class="stat"><small>My planned time</small><b>${st.plannedMePct===null?'—':st.plannedMePct+'%'}</b></div><div class="stat"><small>Days off-schedule</small><b>${st.variance}</b></div></div>
+  ${SCHEDS.length?'':'<p class="mute small" style="margin-top:10px">Set your court-ordered schedule in Settings to see planned vs. actual.</p>'}`;
+}
+function openDay(k){
+  const nm={me:SET.me,other:SET.other,split:'Split'};
+  const list=live().filter(e=>(e.occurred||'').slice(0,10)===k&&e.kind!=='day');
+  openSheet(fDate(k),`<p class="mute">Planned: <b>${nm[planned(k)]||'—'}</b> · Logged: <b>${nm[actual(k)]||'—'}</b></p>
+   <div class="row" style="margin:10px 0">${['me','other','split'].map(v=>`<button class="btn ${actual(k)===v?'':'ghost'}" style="flex:1" data-act="setday" data-date="${k}" data-val="${v}">${nm[v]}</button>`).join('')}</div>
+   <div class="row wrap" style="margin-bottom:8px"><button class="btn ghost sm" data-act="newon" data-k="incident" data-date="${k}">+ Incident</button><button class="btn ghost sm" data-act="newon" data-k="exchange" data-date="${k}">+ Exchange</button><button class="btn ghost sm" data-act="newon" data-k="journal" data-date="${k}">+ Child note</button><button class="btn ghost sm" data-act="newon" data-k="support" data-date="${k}">+ Caregiving</button></div>
+   ${list.length?list.map(item).join(''):'<p class="mute small">No other entries on this day.</p>'}`);
+}
+async function setDay(k,val){
+  const ex=ACT.get(k);
+  if(ex){if(ex.actual===val)return;await append('amend',ex.id,{changes:{actual:val},reason:'Changed who had the child'})}
+  else await append('create',uid(),{kind:'day',date:k,occurred:k+'T12:00',title:'Parenting day '+k,actual:val,planned:planned(k)||null});
+  toast('Logged');closeSheet();render();
+}
+
+/* ---------- insights ---------- */
+function computeStats(list,from,to){
+  const inR=e=>{const d=(e.occurred||'').slice(0,10);return (!from||d>=from)&&(!to||d<=to)};
+  const L=list.filter(e=>!e.voided&&inR(e));
+  const cf=L.filter(e=>e.kind==='conflict'),sup=L.filter(e=>e.kind==='support'),inc=L.filter(e=>e.kind==='incident'),ex=L.filter(e=>e.kind==='exchange'),cm=L.filter(e=>e.kind==='comm'),xp=L.filter(e=>e.kind==='expense'),jn=L.filter(e=>e.kind==='journal');
+  const byTag={};L.forEach(e=>(e.tags||[]).forEach(t=>byTag[t]=(byTag[t]||0)+1));
+  const them=ex.map(e=>lateMin(e.schedAt,e.theirArrive)).filter(m=>m!==null),mine=ex.map(e=>lateMin(e.schedAt,e.myArrive)).filter(m=>m!==null);
+  const lateThem=them.filter(m=>m>5),lateMe=mine.filter(m=>m>5);
+  const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;
+  const stc=s=>ex.filter(e=>e.status===s).length;
+  const rt=(dir)=>cm.filter(e=>e.dir===dir&&e.repliedAt).map(e=>Math.max(0,Math.round((new Date(e.repliedAt)-new Date(e.occurred))/60000)));
+  const myResp=rt('in'),theirResp=rt('out');
+  const hostile={other:cm.filter(e=>e.dir==='in'&&e.tone===3).length,me:cm.filter(e=>e.dir==='out'&&e.tone===3).length};
+  let owedToMe=0,paidMe=0,paidOther=0;
+  xp.forEach(e=>{const a=e.amount||0,mine=(e.myShare??50)/100;if(e.paidBy==='me'){paidMe+=a;if(e.reimb!=='paid')owedToMe+=a*(1-mine)}else{paidOther+=a;if(e.reimb!=='paid')owedToMe-=a*mine}});
+  const supMe=sup.filter(e=>e.who==='me'),supOther=sup.filter(e=>e.who==='other');
+  const sum=a=>a.reduce((x,e)=>x+(e.amount||0),0);
+  const supDuring=supMe.filter(e=>{const k=(e.occurred||'').slice(0,10);return (actual(k)||planned(k))==='other'});
+  return {cf,sup,supMe,supOther,moneyMe:sum(supMe),moneyOther:sum(supOther),supDuring,n:L.length,inc,ex,cm,xp,jn,byTag,them,mine,lateThem:lateThem.length,lateMe:lateMe.length,avgLateThem:avg(lateThem),avgLateMe:avg(lateMe),
+    noshowOther:stc('noshow_other'),noshowMe:stc('noshow_me'),denied:stc('denied'),cancelOther:stc('cancelled_other'),cancelMe:stc('cancelled_me'),
+    myResp:avg(myResp),theirResp:avg(theirResp),nMy:myResp.length,nTheir:theirResp.length,hostile,owedToMe,paidMe,paidOther,positive:L.filter(e=>(e.tags||[]).includes('Positive parenting')).length};
+}
+const bars=(obj,max,keep)=>{const m=max||Math.max(1,...Object.values(obj));return (keep?Object.entries(obj):Object.entries(obj).sort((a,b)=>b[1]-a[1])).map(([k,v])=>`<div style="margin:7px 0"><div class="row small"><span class="grow">${esc(k)}</span><b>${v}</b></div><div class="bar"><i style="width:${v/m*100}%"></i></div></div>`).join('')};
+function vInsights(){
+  const today=dkey(new Date());const s90=computeStats(entries(),addDays(today,-90),today),s30=computeStats(entries(),addDays(today,-30),today);
+  const weeks={};for(let i=11;i>=0;i--){weeks[i===0?'this week':`${i}w ago`]=0}
+  const wk=Object.keys(weeks);
+  s90.inc.forEach(e=>{const d=Math.floor(daysBetween((e.occurred||'').slice(0,10),today)/7);if(d<12)weeks[wk[11-d]]++});
+  const flags=[];
+  if(s90.ex.length>=3&&s90.lateThem>=2)flags.push(`${SET.other} arrived more than 5 min late to ${s90.lateThem} exchange(s), averaging ${s90.avgLateThem} min.`);
+  if(s90.noshowOther)flags.push(`${s90.noshowOther} no-show(s) by ${SET.other}; ${s90.denied} denial(s) of parenting time.`);
+  if(s90.nTheir>=2&&s90.nMy>=2&&s90.theirResp>s90.myResp*2)flags.push(`${SET.other} replies in ${s90.theirResp} min on average vs. your ${s90.myResp} min.`);
+  if(s90.hostile.other>=2)flags.push(`${s90.hostile.other} hostile message(s) from ${SET.other} logged.`);
+  if(Math.abs(s90.owedToMe)>0.5)flags.push(s90.owedToMe>0?`${SET.other} owes you ${money(s90.owedToMe)} in unsettled expenses.`:`You owe ${SET.other} ${money(-s90.owedToMe)} in unsettled expenses.`);
+  if(s90.supDuring.length>=2)flags.push(`You did ${s90.supDuring.length} caregiving task(s) during ${SET.other}’s parenting time (rides, appointments, money).`);
+  if(s90.hostile.me>=1)flags.push(`You have ${s90.hostile.me} message(s) tagged hostile from yourself — a court will read these too.`);
+  const ts=timeStats(addDays(today,-90),today);
+  return `<h1>Insights</h1><p class="mute" style="margin:4px 0 14px">Patterns from your last 90 days. Numbers, not adjectives.</p>
+  <div class="grid g4"><div class="stat"><small>Entries (30d)</small><b>${s30.n}</b></div><div class="stat"><small>Incidents (90d)</small><b>${s90.inc.length}</b></div><div class="stat"><small>My actual time (90d)</small><b>${ts.mePct===null?'—':ts.mePct+'%'}</b></div><div class="stat"><small>Positive-parenting notes</small><b>${s90.positive}</b></div></div>
+  <div class="card" style="margin-top:14px"><h3>What stands out</h3>${flags.length?flags.map(f=>`<p style="margin:8px 0">• ${esc(f)}</p>`).join(''):'<p class="mute">Not enough data yet to flag patterns. Keep logging exchanges, messages and days.</p>'}</div>
+  <div class="grid g2">
+   <div class="card"><h3>Exchanges (90d)</h3><table style="width:100%;margin-top:8px"><tr><td></td><td class="right mute small">${esc(SET.other)}</td><td class="right mute small">Me</td></tr>
+    <tr><td>Late (&gt;5 min)</td><td class="right"><b>${s90.lateThem}</b></td><td class="right"><b>${s90.lateMe}</b></td></tr>
+    <tr><td>Avg minutes late</td><td class="right"><b>${s90.avgLateThem}</b></td><td class="right"><b>${s90.avgLateMe}</b></td></tr>
+    <tr><td>No-shows</td><td class="right"><b>${s90.noshowOther}</b></td><td class="right"><b>${s90.noshowMe}</b></td></tr>
+    <tr><td>Cancellations</td><td class="right"><b>${s90.cancelOther}</b></td><td class="right"><b>${s90.cancelMe}</b></td></tr></table></div>
+   <div class="card"><h3>Communication (90d)</h3><table style="width:100%;margin-top:8px"><tr><td></td><td class="right mute small">${esc(SET.other)}</td><td class="right mute small">Me</td></tr>
+    <tr><td>Avg reply time (min)</td><td class="right"><b>${s90.nTheir?s90.theirResp:'—'}</b></td><td class="right"><b>${s90.nMy?s90.myResp:'—'}</b></td></tr>
+    <tr><td>Hostile messages</td><td class="right"><b>${s90.hostile.other}</b></td><td class="right"><b>${s90.hostile.me}</b></td></tr>
+    <tr><td>Logged messages</td><td class="right"><b>${s90.cm.filter(e=>e.dir==='in').length}</b></td><td class="right"><b>${s90.cm.filter(e=>e.dir==='out').length}</b></td></tr></table></div></div>
+  <div class="card"><h3>Involvement (90d)</h3><table style="width:100%;margin-top:8px"><tr><td></td><td class="right mute small">${esc(SET.other)}</td><td class="right mute small">Me</td></tr>
+    <tr><td>Caregiving actions logged</td><td class="right"><b>${s90.supOther.length}</b></td><td class="right"><b>${s90.supMe.length}</b></td></tr>
+    <tr><td>Money given for the kids</td><td class="right"><b>${money(s90.moneyOther)}</b></td><td class="right"><b>${money(s90.moneyMe)}</b></td></tr>
+    <tr><td>Done during the other parent’s time</td><td class="right">—</td><td class="right"><b>${s90.supDuring.length}</b></td></tr></table>
+    ${s90.supMe.length?'<div style="margin-top:10px">'+bars(s90.supMe.reduce((o,e)=>(o[e.action]=(o[e.action]||0)+1,o),{}))+'</div>':'<p class="mute small" style="margin-top:8px">Log drop-offs, appointments and money given to build this picture.</p>'}</div>
+  <div class="card"><h3>Incidents per week</h3>${bars(weeks,Math.max(3,...Object.values(weeks)),true)}</div>
+  <div class="card"><h3>By best-interest factor</h3>${Object.keys(s90.byTag).length?bars(s90.byTag):'<p class="mute">Tag entries with factors to see this.</p>'}</div>`;
+}
+
+/* ---------- conflict hub ---------- */
+function vConflict(){
+  const today=dkey(new Date());
+  const all=live().filter(e=>e.kind==='conflict');
+  const rng=(a,b)=>all.filter(e=>{const d=(e.occurred||'').slice(0,10);return d>=addDays(today,a)&&d<=addDays(today,b)});
+  const c30=rng(-30,0),p30=rng(-60,-31),c90=rng(-90,0);
+  const avg=a=>a.length?a.reduce((x,e)=>x+(e.escalation||1),0)/a.length:0;
+  const pct=(n,d)=>d?Math.round(n/d*100)+'%':'—';
+  const good=['calm','boundary','disengaged','ignored'];
+  const calm=c90.filter(e=>good.includes(e.response)).length,inkind=c90.filter(e=>e.response==='inkind').length;
+  const kids=c90.filter(e=>e.childInvolved).length;
+  const count=(arr,f)=>arr.reduce((o,e)=>{const k=f(e);if(k)o[k]=(o[k]||0)+1;return o},{});
+  const byTopic=count(c90,e=>e.topic),byCh=count(c90,e=>CF_CH[e.channel]);
+  const when={Morning:0,Afternoon:0,Evening:0,Night:0};c90.forEach(e=>{const hr=+((e.occurred||'T12').slice(11,13));when[hr>=5&&hr<12?'Morning':hr>=12&&hr<17?'Afternoon':hr>=17&&hr<22?'Evening':'Night']++});
+  const dow={};DAYN.forEach(d=>dow[d]=0);c90.forEach(e=>{dow[DAYN[(dfrom((e.occurred||today).slice(0,10)).getDay()+6)%7]]++});
+  const weeks={};for(let i=11;i>=0;i--)weeks[i===0?'this week':`${i}w ago`]=0;const wk=Object.keys(weeks);
+  c90.forEach(e=>{const d=Math.floor(daysBetween((e.occurred||today).slice(0,10),today)/7);if(d<12)weeks[wk[11-d]]++});
+  const flags=[];const N=c90.length;
+  const top=Object.entries(byTopic).sort((a,b)=>b[1]-a[1])[0];
+  if(N>=4&&top&&top[1]/N>=0.4)flags.push(`${Math.round(top[1]/N*100)}% of conflicts (${top[1]} of ${N}) are about “${top[0]}”. That is the issue to solve at the root.`);
+  const tw=Object.entries(when).sort((a,b)=>b[1]-a[1])[0];if(N>=4&&tw[1]/N>=0.5)flags.push(`${Math.round(tw[1]/N*100)}% of conflicts happen in the ${tw[0].toLowerCase()}. Consider moving sensitive topics out of that window.`);
+  const tc=Object.entries(byCh).sort((a,b)=>b[1]-a[1])[0];if(N>=4&&tc&&tc[1]/N>=0.6)flags.push(`${Math.round(tc[1]/N*100)}% happen by ${tc[0].toLowerCase()}. Moving that topic to a different channel may help.`);
+  if(c30.length>=p30.length+2||(c30.length>=3&&p30.length>=3&&avg(c30)-avg(p30)>=0.7))flags.push(`Conflict is rising: ${c30.length} in the last 30 days vs ${p30.length} in the 30 before${p30.length&&c30.length?`, average escalation ${avg(c30).toFixed(1)} vs ${avg(p30).toFixed(1)}`:''}.`);
+  if(kids>=2)flags.push(`The child heard or was pulled into ${kids} conflicts in 90 days. Courts weigh this heavily.`);
+  const otherStart=c90.filter(e=>e.startedBy==='other').length;if(N>=4&&otherStart/N>=0.6)flags.push(`${Math.round(otherStart/N*100)}% were started by ${SET.other}.`);
+  if(inkind>=1)flags.push(`You responded in kind ${inkind} time(s). A court reads your conduct too, so note what you would do differently.`);
+  const hard=c90.filter(e=>e.escalation>=4).length;if(hard)flags.push(`${hard} conflict(s) reached threats or a safety concern (level 4–5). If you feel unsafe, call 911; document and talk to your attorney.`);
+  const open=all.filter(e=>CF_OPEN.includes(e.outcome)).slice(0,6);
+  const topics=Object.keys(count(all,e=>e.topic));
+  const recent=all.filter(e=>!CF_TOPIC||e.topic===CF_TOPIC).slice(0,12);
+  const delta=c30.length-p30.length;
+  return `<div class="row"><h1 class="grow">Conflict hub</h1><button class="btn sm" data-act="new" data-k="conflict">+ Log conflict</button></div>
+  <p class="mute" style="margin:4px 0 14px">Log each conflict in two minutes. The patterns below show what keeps starting them and whether things are getting better.</p>
+  <div class="grid g4"><div class="stat"><small>Conflicts (30d)</small><b>${c30.length}</b><small>${p30.length||c30.length?(delta===0?'same as prior 30':(delta>0?'▲ ':'▼ ')+Math.abs(delta)+' vs prior 30'):''}</small></div>
+   <div class="stat"><small>Avg escalation (30d)</small><b>${c30.length?avg(c30).toFixed(1):'—'}</b><small>scale 1–5</small></div>
+   <div class="stat"><small>Child exposed (90d)</small><b>${pct(kids,N)}</b><small>${kids} of ${N}</small></div>
+   <div class="stat"><small>I stayed constructive</small><b>${pct(calm,N)}</b><small>${calm} of ${N} (90d)</small></div></div>
+  <div class="card" style="margin-top:14px"><h3>What stands out</h3>${flags.length?flags.map(f=>`<p style="margin:8px 0">• ${esc(f)}</p>`).join(''):`<p class="mute">${N<4?'Log at least four conflicts and patterns will start to appear.':'No strong pattern in the last 90 days.'}</p>`}</div>
+  ${open.length?`<div class="card"><h3>Open issues</h3><div class="small mute" style="margin-bottom:4px">Unresolved, ongoing or escalated. These are the ones to raise with your attorney or mediator.</div>${open.map(e=>`<div class="row" style="border-bottom:1px solid var(--line)"><div class="grow">${item(e)}</div><button class="btn ghost sm" data-act="resolve" data-id="${e.id}">Resolved</button></div>`).join('')}</div>`:''}
+  <div class="grid g2"><div class="card"><h3>By topic (90d)</h3>${N?bars(byTopic):'<p class="mute small">No data yet.</p>'}</div><div class="card"><h3>By channel (90d)</h3>${N?bars(byCh):'<p class="mute small">No data yet.</p>'}</div>
+   <div class="card"><h3>Time of day (90d)</h3>${bars(when,Math.max(1,...Object.values(when)),true)}</div><div class="card"><h3>Day of week (90d)</h3>${bars(dow,Math.max(1,...Object.values(dow)),true)}</div></div>
+  <div class="card"><h3>Conflicts per week</h3>${bars(weeks,Math.max(3,...Object.values(weeks)),true)}</div>
+  <div class="card"><div class="row wrap"><h3 class="grow">Conflict log</h3></div>${topics.length?`<div class="chips" style="margin:8px 0"><button class="chip ${CF_TOPIC===''?'on':''}" data-act="cftopic" data-v="">All</button>${topics.map(t=>`<button class="chip ${CF_TOPIC===t?'on':''}" data-act="cftopic" data-v="${esc(t)}">${esc(t)}</button>`).join('')}</div>`:''}${recent.length?recent.map(item).join(''):'<p class="mute">No conflicts logged yet. When one happens, log it while it is fresh.</p>'}</div>
+  <div class="card flat small mute">If a conflict involves threats, stalking or violence, this log is not a safety plan. Call 911 in an emergency or the National Domestic Violence Hotline at 1-800-799-7233.</div>`;
+}
+
+/* ---------- reply helper ---------- */
+function vTools(){
+  return `<h1>Reply helper</h1><p class="mute" style="margin:4px 0 14px">Paste a message you received (or a draft you’re about to send). Nothing leaves your device.</p>
+  <div class="card"><label class="f"><span>Message</span><textarea id="rh" style="min-height:150px" placeholder="Paste here…"></textarea></label>
+   <div class="row wrap"><button class="btn" data-act="rh">Analyze &amp; draft BIFF reply</button><button class="btn ghost" data-act="rhlog">Log as communication</button></div></div>
+  <div id="rhOut"></div>
+  <div class="card flat small mute"><b>BIFF</b> = Brief, Informative, Friendly, Firm. Reply to logistics only, never to bait. A calm paper trail is the strongest thing you can build.</div>`;
+}
+function biff(text){
+  const r=lint(text);const sents=(text.match(/[^.!?\n]+[?]/g)||[]).map(s=>s.trim()).slice(0,4);
+  const hostile=r.issues.filter(i=>i.k==='label'||i.k==='emo').length>0;
+  const qs=sents.map(q=>`Re: “${q}” — [your answer].`).join('\n');
+  const draft=`Hi ${SET.other==='Other parent'?'[name]':SET.other.split(' ')[0]},\n\nThanks for your message.${qs?'\n\n'+qs:'\n\n[State your decision or the one fact they need.]'}\n\nI’m glad to keep working through the children’s schedule and needs in writing.\n\nThanks,\n${SET.me==='Me'?'[your name]':SET.me}`;
+  return {draft,hostile,r};
+}
+
+/* ---------- report ---------- */
+function vReport(){
+  const today=dkey(new Date());
+  return `<h1>Court-ready report</h1><p class="mute" style="margin:4px 0 14px">Numbered entries, parenting-time tables, exhibits and an integrity statement. Print or save as PDF on Mac and iPhone.</p>
+  <div class="card"><form id="rf"><div class="grid g2"><label class="f"><span>From</span><input type="date" name="from" value="${addDays(today,-90)}"></label><label class="f"><span>To</span><input type="date" name="to" value="${today}"></label></div>
+   <div class="f"><span class="mute small" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em">Include</span><div class="chips" style="margin-top:5px" data-chips="kinds">${Object.entries(KINDS).filter(([k])=>k!=='day').map(([k,v])=>`<button type="button" class="chip on" data-act="chip" data-v="${k}">${v.icon} ${v.label}</button>`).join('')}</div></div>
+   <label class="ck"><input type="checkbox" name="photos" checked> Embed photo exhibits</label>
+   <label class="ck"><input type="checkbox" name="voided"> Show voided entries (for full transparency)</label>
+   <label class="ck"><input type="checkbox" name="positive"> Only entries tagged “Positive parenting”</label>
+   <label class="ck"><input type="checkbox" name="keyOnly"> Only entries I starred as key</label>
+   <label class="ck"><input type="checkbox" name="decl"> Add a draft authentication declaration for my attorney</label>
+   <button class="btn" style="width:100%">Build report</button></form></div>
+  <div class="card flat small mute">Tip: also send your attorney a backup file (Settings). They can check it with “Check a backup file” without importing anything. Not legal advice. Rules for admissibility vary by state and judge.</div>`;
+}
+async function buildReport(o){
+  const L=entries().filter(e=>(o.voided||!e.voided)&&o.kinds.includes(e.kind)&&(e.occurred||'').slice(0,10)>=o.from&&(e.occurred||'').slice(0,10)<=o.to&&(!o.positive||(e.tags||[]).includes('Positive parenting'))&&(!o.keyOnly||e.key)).sort((a,b)=>(a.occurred||'').localeCompare(b.occurred||''));
+  const st=computeStats(entries(),o.from,o.to),ts=timeStats(o.from,o.to);
+  const kidNames=SET.children.map(c=>c.name).join(', ')||'—';
+  const nm={me:SET.me,other:SET.other,split:'Split'};
+  const E=e=>'E-'+String(e.seq).padStart(4,'0');
+  let ent='';
+  for(const e of L){
+    const rows=fieldsList(e).filter(r=>r[0]!=='Occurred').map(([l,v])=>`${esc(l)}: <b>${esc(v)}</b>`).join(' &nbsp;·&nbsp; ');
+    let atts='';
+    for(const [i,a] of (e.att||[]).entries()){
+      atts+=`<div class="meta">Exhibit ${E(e)}-${i+1}: ${esc(a.name)} (${esc(a.type||'file')}, ${Math.round(a.size/1024)} KB) · SHA-256 <span class="mono">${a.hash}</span></div>`;
+      if(o.photos&&a.type.startsWith('image/')){const b=await DB.get('blobs',a.id);if(b){const u=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(new Blob([b.data],{type:b.type}))});atts+=`<div style="margin:6px 0"><img src="${u}"></div>`}}
+    }
+    const am=realAmends(e).map(a=>`<div class="meta">Amended ${fTS(a.ts)} — ${esc(a.reason)} (changed: ${Object.keys(a.changes).join(', ')||'attachments only'})</div>`).join('');
+    ent+=`<div class="ent"><div class="hd"><span>${E(e)} · ${KINDS[e.kind].label}</span><span>${fDT(e.occurred)}</span></div><div class="tt">${esc(e.title)}${e.voided?' <span style="color:#b91c1c">[VOIDED '+fTS(e.voided.ts)+': '+esc(e.voided.reason)+']</span>':''}</div>${e.body?`<div class="body">${esc(e.body)}</div>`:''}<div class="meta">${rows}</div>${atts}${am}<div class="meta">Logged ${fTS(e.created)} · record SHA-256 <span class="mono">${e.hash}</span></div></div>`;
+  }
+  const dayRows=[];for(let k=o.from;k<=o.to;k=addDays(k,1)){const a=actual(k);if(a||planned(k))dayRows.push(`<tr><td>${k}</td><td>${DAYN[(dfrom(k).getDay()+6)%7]}</td><td>${nm[planned(k)]||'—'}</td><td>${nm[a]||'<i>not logged</i>'}</td><td>${a&&planned(k)&&a!==planned(k)?'Different':''}</td></tr>`)}
+  const ex=L.filter(e=>e.kind==='exchange'&&!e.voided).map(e=>`<tr><td>${E(e)}</td><td>${fDT(e.schedAt||e.occurred)}</td><td>${e.dir==='pickup'?'Pick-up':'Drop-off'}</td><td>${STATUS_L[e.status]||''}</td><td>${fmtLate(lateMin(e.schedAt,e.theirArrive))||'—'}</td><td>${fmtLate(lateMin(e.schedAt,e.myArrive))||'—'}</td></tr>`).join('');
+  const xp=L.filter(e=>e.kind==='expense'&&!e.voided).map(e=>`<tr><td>${E(e)}</td><td>${fDate(e.occurred)}</td><td>${esc(e.category)}</td><td>${esc(e.title)}</td><td>${e.paidBy==='me'?esc(SET.me):esc(SET.other)}</td><td>${money(e.amount||0)}</td><td>${e.myShare??50}%</td><td>${esc(e.reimb)}</td></tr>`).join('');
+  const sp=L.filter(e=>e.kind==='support'&&!e.voided).map(e=>`<tr><td>${E(e)}</td><td>${fDate(e.occurred)}</td><td>${e.who==='me'?esc(SET.me):esc(SET.other)}</td><td>${esc(e.action)}</td><td>${e.amount?money(e.amount):''}</td><td>${esc(duringLabel(e))}</td></tr>`).join('');
+  const keyL=L.filter(e=>e.key&&!e.voided);
+  const keySec=keyL.length?`<h2>1A. Key entries</h2><table><tr><th>Entry</th><th>Date</th><th>Type</th><th>Summary</th></tr>${keyL.map(e=>`<tr><td>${E(e)}</td><td>${fDT(e.occurred)}</td><td>${KINDS[e.kind].label}</td><td>${esc(e.title)}</td></tr>`).join('')}</table>`:'';
+  const verified=await verifyChain();
+  const attAll=[];L.forEach(e=>(e.att||[]).forEach((a,i)=>attAll.push([E(e)+'-'+(i+1),a])));
+  const declSec=o.decl?`<div style="page-break-before:always"></div><h2>8. Draft declaration for authentication (template for attorney review)</h2>
+   <p><i>This is a template, not legal advice. Whether and how a declaration like this is used depends on your court and state (for comparison, see Fed. R. Evid. 902(13) and 902(14) on certified electronic records). It helps show the record is genuine and unaltered. It does not prove the entries are true, and the other side can still object on other grounds.</i></p>
+   <p>I, ${esc(SET.me==='Me'?'[name]':SET.me)}, declare:</p><ol>
+   <li>I created and maintained this record using the software “Custody Ledger” on my own device. I made each entry myself at or near the time of the events described.</li>
+   <li>The software stores records in an append-only ledger. Each record contains the SHA-256 hash of the record before it, so changing or removing any earlier record changes every later hash. Corrections are stored as dated amendments, and entries are voided, never deleted.</li>
+   <li>On ${fTS(new Date().toISOString())} I re-verified the ledger. It contains ${LEDGER.length} records and the chain was ${verified?'intact':'NOT intact ('+esc(CHAIN_MSG)+')'}. The hash of the most recent record is <span class="mono">${head()}</span>.</li>
+   <li>${attAll.length} attached file(s) were fingerprinted with SHA-256 when I added them. Their hashes are listed below.</li>
+   <li>This report was generated directly from the ledger. I did not edit the text of any entry in producing it.</li></ol>
+   ${attAll.length?`<table><tr><th>Exhibit</th><th>File</th><th>SHA-256</th></tr>${attAll.map(([x,a])=>`<tr><td>${x}</td><td>${esc(a.name)}</td><td class="mono">${a.hash}</td></tr>`).join('')}</table>`:''}
+   <p>I declare under penalty of perjury under the laws of the State of ____________ that the foregoing is true and correct.</p>
+   <div class="sig"><div>Signature</div><div>Printed name</div><div>Date</div></div>`:'';
+  const html=`<div class="paper">
+   <h1>Parenting Record</h1><div style="color:#444">${SET.caseNo?`Case no. ${esc(SET.caseNo)} · `:''}${esc(SET.court||'')}</div>
+   <table style="margin-top:14px"><tr><th>Prepared by</th><td>${esc(SET.me)}</td><th>Other parent</th><td>${esc(SET.other)}</td></tr><tr><th>Children</th><td>${esc(kidNames)}</td><th>Period</th><td>${fDate(o.from)} – ${fDate(o.to)}</td></tr><tr><th>Generated</th><td>${fTS(new Date().toISOString())}</td><th>Entries</th><td>${L.length}</td></tr></table>
+   <p style="font-size:12px;color:#444">This is a contemporaneous personal record kept by a parent. Entries are append-only; corrections appear as dated amendments and entries are voided, never deleted. It is a record of the preparer’s observations, not legal advice.</p>
+   <h2>1. Summary</h2>
+   <table><tr><th>Incidents</th><th>Exchanges</th><th>Communications</th><th>Child notes</th><th>Expenses</th><th>Caregiving</th><th>Conflicts</th></tr><tr><td>${st.inc.length}</td><td>${st.ex.length}</td><td>${st.cm.length}</td><td>${st.jn.length}</td><td>${st.xp.length}</td><td>${st.sup.length}</td><td>${st.cf.length}</td></tr></table>
+   <table><tr><th colspan="2">Parenting time (${o.from} to ${o.to})</th></tr><tr><td>Days logged</td><td>${ts.logged} of ${ts.days}</td></tr><tr><td>Actual time with ${esc(SET.me)}</td><td>${ts.mePct===null?'—':ts.mePct+'%'} (${ts.aMe} days, ${ts.aSplit} split)</td></tr><tr><td>Actual time with ${esc(SET.other)}</td><td>${ts.logged?ts.aOther+' days':'—'}</td></tr><tr><td>Scheduled time with ${esc(SET.me)}</td><td>${ts.plannedMePct===null?'—':ts.plannedMePct+'%'}</td></tr><tr><td>Days that differed from schedule</td><td>${ts.variance}</td></tr></table>
+   <table><tr><th></th><th>${esc(SET.other)}</th><th>${esc(SET.me)}</th></tr><tr><td>Exchanges &gt;5 min late</td><td>${st.lateThem}</td><td>${st.lateMe}</td></tr><tr><td>Average minutes late</td><td>${st.avgLateThem}</td><td>${st.avgLateMe}</td></tr><tr><td>No-shows / non-attendance</td><td>${st.noshowOther}</td><td>${st.noshowMe}</td></tr><tr><td>Cancellations</td><td>${st.cancelOther}</td><td>${st.cancelMe}</td></tr><tr><td>Hostile messages (tagged)</td><td>${st.hostile.other}</td><td>${st.hostile.me}</td></tr></table>
+   ${keySec}
+   ${ex?`<h2>2. Exchange log</h2><table><tr><th>Entry</th><th>Scheduled</th><th>Type</th><th>Outcome</th><th>${esc(SET.other)} arrival</th><th>My arrival</th></tr>${ex}</table>`:''}
+   ${sp?`<h2>2A. Parental involvement</h2><table><tr><th></th><th>${esc(SET.other)}</th><th>${esc(SET.me)}</th></tr><tr><td>Caregiving actions</td><td>${st.supOther.length}</td><td>${st.supMe.length}</td></tr><tr><td>Money given for the children</td><td>${money(st.moneyOther)}</td><td>${money(st.moneyMe)}</td></tr><tr><td>Done during the other parent’s time</td><td>—</td><td>${st.supDuring.length}</td></tr></table><table><tr><th>Entry</th><th>Date</th><th>Done by</th><th>Action</th><th>Amount</th><th>During</th></tr>${sp}</table>`:''}
+   ${st.cf.length?(()=>{const c=st.cf,cnt=f=>c.reduce((o,e)=>{const k=f(e);if(k)o[k]=(o[k]||0)+1;return o},{});const tb=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${v}</td></tr>`).join('');const av=(c.reduce((x,e)=>x+(e.escalation||1),0)/c.length).toFixed(1);
+     return `<h2>2B. Conflict summary</h2><table><tr><th>Conflicts logged</th><td>${c.length}</td><th>Average escalation (1–5)</th><td>${av}</td></tr><tr><th>Started by ${esc(SET.other)}</th><td>${c.filter(e=>e.startedBy==='other').length}</td><th>Started by ${esc(SET.me)}</th><td>${c.filter(e=>e.startedBy==='me').length}</td></tr><tr><th>Child heard or involved</th><td>${c.filter(e=>e.childInvolved).length}</td><th>Still open</th><td>${c.filter(e=>CF_OPEN.includes(e.outcome)).length}</td></tr></table><table><tr><th>Topic</th><th>Count</th></tr>${tb(cnt(e=>e.topic))}</table><table><tr><th>My response</th><th>Count</th></tr>${tb(cnt(e=>CF_RESP[e.response]))}</table>`})():''}
+   ${dayRows.length?`<h2>3. Daily parenting-time record</h2><table><tr><th>Date</th><th>Day</th><th>Scheduled</th><th>Actual</th><th>Variance</th></tr>${dayRows.join('')}</table>`:''}
+   ${xp?`<h2>4. Expenses</h2><table><tr><th>Entry</th><th>Date</th><th>Category</th><th>Description</th><th>Paid by</th><th>Amount</th><th>My share</th><th>Status</th></tr>${xp}</table><p>Net unsettled: <b>${st.owedToMe>=0?esc(SET.other)+' owes '+esc(SET.me):esc(SET.me)+' owes '+esc(SET.other)} ${money(Math.abs(st.owedToMe))}</b></p>`:''}
+   <h2>5. Chronological entries</h2>${ent||'<p>No entries in this range.</p>'}
+   <h2>6. Integrity statement</h2>
+   <p>This record was kept in an append-only ledger in which each record contains the SHA-256 hash of the record before it. Altering or removing any earlier record changes every later hash. On ${fTS(new Date().toISOString())} the ledger was re-verified: <b>${verified?'chain intact — '+LEDGER.length+' records':'CHAIN BREAK — '+esc(CHAIN_MSG)}</b>.</p>
+   <p>Ledger head hash: <span class="mono">${head()}</span></p>
+   <p style="font-size:12px;color:#444">Record timestamps come from the preparer’s device clock. Attached files are fingerprinted with SHA-256 at the time of upload.</p>
+   <h2>7. Declaration</h2><p>I declare that the entries above were made by me at or near the time of the events described and are true and correct to the best of my knowledge.</p>
+   <div class="sig"><div>Signature</div><div>Printed name: ${esc(SET.me==='Me'?'':SET.me)}</div><div>Date</div></div>${declSec}</div>`;
+  return html;
+}
+function showReport(html){
+  const v=$('#reportView');
+  v.innerHTML=`<div class="tb"><button class="btn ghost sm" data-act="rclose">‹ Back</button><div class="t">Report preview</div><button class="btn sm" data-act="rprint">Print / Save PDF</button><button class="btn ghost sm" data-act="rdl">Download .html</button></div>${html}`;
+  v.classList.add('on');v.scrollTop=0;window._reportHTML=html;
+}
+
+/* ---------- settings ---------- */
+function vSettings(){
+  const sch=SCHEDS[SCHEDS.length-1];
+  return `<h1>Settings</h1>
+  ${installCard()}
+  <div class="card"><h3>You &amp; the case</h3><form id="sf" style="margin-top:10px"><div class="grid g2"><label class="f"><span>Your name</span><input name="me" value="${esc(SET.me==='Me'?'':SET.me)}" placeholder="Me"></label><label class="f"><span>Other parent</span><input name="other" value="${esc(SET.other==='Other parent'?'':SET.other)}" placeholder="Other parent"></label><label class="f"><span>Case number</span><input name="caseNo" value="${esc(SET.caseNo)}"></label><label class="f"><span>Court</span><input name="court" value="${esc(SET.court)}"></label></div><button class="btn sm">Save</button></form></div>
+  <div class="card"><h3>Children</h3><div class="chips" style="margin:10px 0">${SET.children.map(c=>`<span class="chip">${esc(c.name)} <b data-act="rmkid" data-id="${c.id}" style="margin-left:6px;cursor:pointer">✕</b></span>`).join('')||'<span class="mute">None added</span>'}</div><div class="row"><input id="kidName" placeholder="Child’s first name"><button class="btn sm" data-act="addkid">Add</button></div></div>
+  <div class="card"><h3>Custody schedule</h3><p class="mute small">Enter what your order says. Changes are logged with an effective date, so old days keep the old schedule.</p>
+   <div id="schedBox">${schedEditor(sch)}</div></div>
+  <div class="card"><h3>Privacy lock</h3><p class="mute small">Locks the app after a minute in the background. This is a privacy screen — protect the device itself with Face ID / a Mac login as well.</p>
+   <div class="row wrap"><button class="btn sm" data-act="setpin">${SET.pin?'Change PIN':'Set PIN'}</button>${SET.pin?'<button class="btn ghost sm" data-act="rmpin">Remove PIN</button>':''}</div></div>
+  <div class="card"><h3>Backup, sync &amp; export</h3><p class="mute small">Data lives only in this browser on this device. Mac and iPhone do <b>not</b> sync automatically — export a backup (optionally encrypted) and import it on the other device. Merging keeps both sides’ records.</p>
+   <div class="row wrap"><button class="btn sm" data-act="backup">Export backup</button><button class="btn ghost sm" data-act="restore">Import backup</button><button class="btn ghost sm" data-act="csv">Export CSV</button></div><input type="file" id="restoreFile" accept=".json,application/json" style="display:none"></div>
+  <div class="card"><h3>Prove it hasn’t been altered</h3><p class="mute small">Chain status: <b style="color:${CHAIN_OK?'var(--good)':'var(--bad)'}">${esc(CHAIN_MSG)}</b><br>Head hash: <span style="word-break:break-all">${head()}</span></p>
+   <p class="mute small">The device clock could be changed, so anchor your record: email the head hash to yourself or your attorney. The email’s timestamp independently proves the record existed in that state at that time.</p>
+   <p class="mute small">Anyone you send a backup file to can check it here. Nothing is imported or changed.</p>
+   <div class="row wrap"><button class="btn sm" data-act="verify">Re-verify chain</button><button class="btn ghost sm" data-act="verifyfile">Check a backup file</button><button class="btn ghost sm" data-act="anchor">Email head hash</button></div><input type="file" id="verifyFileIn" accept=".json,application/json" style="display:none"></div>
+  <div class="card"><h3>Danger zone</h3><p class="mute small">Erases everything on this device. Export a backup first.</p><button class="btn bad sm" data-act="wipe">Erase all data</button></div>
+  <p class="small mute">Custody Ledger is a personal documentation tool, not legal advice. Check with your attorney about what your court accepts.</p>`;
+}
+function schedEditor(s){
+  const w=s?.weeks||[Array(7).fill(''),Array(7).fill('')];
+  const opts=v=>[['','—'],['me',SET.me],['other',SET.other],['split','Split']].map(([k,l])=>`<option value="${k}" ${v===k?'selected':''}>${esc(l)}</option>`).join('');
+  const wk=i=>`<div class="small mute" style="font-weight:700;margin:8px 0 4px">WEEK ${i?'B':'A'}</div><div class="grid" style="grid-template-columns:repeat(7,1fr);gap:4px">${DAYN.map((d,j)=>`<div><div class="small mute" style="text-align:center">${d}</div><select data-wk="${i}" data-dow="${j}" style="padding:6px 2px;font-size:13px">${opts(w[i][j])}</select></div>`).join('')}</div>`;
+  return `<label class="ck"><input type="checkbox" id="schAlt" ${s?.alternate?'checked':''}> Alternating weeks (A/B)</label>${wk(0)}<div id="wkB" style="${s?.alternate?'':'display:none'}">${wk(1)}</div>
+   <div class="grid g2" style="margin-top:10px"><label class="f"><span>A week starts Monday…</span><input type="date" id="schAnchor" value="${s?.anchor||mondayOf(dkey(new Date()))}"></label><label class="f"><span>Effective from</span><input type="date" id="schEff" value="${dkey(new Date())}"></label></div><button class="btn sm" data-act="savesched">Save schedule</button>`;
+}
+const mondayOf=k=>addDays(k,-((dfrom(k).getDay()+6)%7));
+function vMore(){return `<h1>More</h1><div class="grid" style="margin-top:14px">${[['conflict','🔥','Conflict hub','Log conflicts, spot patterns, track open issues'],['report','📄','Court-ready report','Build a printable, exhibit-numbered PDF'],['tools','🛠','Reply helper','Draft calm BIFF replies, check tone'],['settings','⚙️','Settings','Children, schedule, lock, backup']].map(([r,i,t,d])=>`<div class="card" data-act="go" data-r="${r}" style="cursor:pointer;margin:0"><div class="row"><span style="font-size:26px">${i}</span><div><b>${t}</b><div class="small mute">${d}</div></div></div></div>`).join('')}</div>`}
+
+/* ---------- backup / restore ---------- */
+const b64=buf=>{let s='';const u=new Uint8Array(buf);for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)};
+const unb64=s=>{const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer};
+async function deriveKey(pass,salt){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function exportBackup(){
+  const blobs=[];for(const b of await DB.all('blobs'))blobs.push({id:b.id,type:b.type,name:b.name,data:b64(b.data)});
+  const payload={app:'custody-ledger',v:1,exportedAt:new Date().toISOString(),settings:{...SET,pin:null,salt:null},ledger:LEDGER,blobs};
+  let out=JSON.stringify(payload);
+  const pass=prompt('Optional: type a passphrase to encrypt this backup (AES-256). Leave blank for an unencrypted file. If you forget the passphrase the backup cannot be opened.');
+  if(pass&&!hasSubtle()){toast('Encryption needs a secure (https) page; exported unencrypted.',5000);}
+  if(pass&&hasSubtle()){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+    const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},await deriveKey(pass,salt),new TextEncoder().encode(out));
+    out=JSON.stringify({app:'custody-ledger',enc:true,salt:b64(salt),iv:b64(iv),ct:b64(ct)})}
+  const blob=new Blob([out],{type:'application/json'});const name=`custody-ledger-${dkey(new Date())}${pass?'-encrypted':''}.json`;
+  const file=new File([blob],name,{type:'application/json'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})&&/iPhone|iPad/.test(navigator.userAgent)){try{await navigator.share({files:[file],title:name})}catch(e){if(e.name==='AbortError')return}}
+  else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click()}
+  SET.lastBackup=new Date().toISOString();await saveSettings();toast('Backup exported');if(ROUTE==='home'||ROUTE==='settings')render();
+}
+async function importBackup(file){
+  try{
+    const data=await readBackup(file);if(!data)return;
+    openSheet('Import backup',`<p>Backup from <b>${fTS(data.exportedAt)}</b> with <b>${data.ledger.length}</b> records (you have ${LEDGER.length}).</p>
+     <p class="small mute"><b>Merge</b> adds records you don’t have and re-links the chain, logging a merge marker. <b>Replace</b> discards this device’s data and restores the backup exactly.</p>
+     <div class="row wrap"><button class="btn" id="doMerge">Merge</button><button class="btn bad" id="doReplace">Replace</button></div>`,sh=>{
+      window._imp=data;$('#doMerge',sh).onclick=()=>applyImport('merge');$('#doReplace',sh).onclick=()=>applyImport('replace');
+    });
+  }catch(e){toast('Could not open backup: '+(e.name==='OperationError'?'wrong passphrase':e.message),4000)}
+}
+async function applyImport(mode){
+  const d=window._imp;
+  for(const b of d.blobs||[])await DB.put('blobs',{id:b.id,type:b.type,name:b.name,data:unb64(b.data)},b.id);
+  if(mode==='replace'){await DB.clear('ledger');LEDGER=d.ledger.slice().sort((a,b)=>a.seq-b.seq);for(const ev of LEDGER)await DB.put('ledger',ev);
+    SET={...SET,...d.settings,pin:SET.pin,salt:SET.salt}}
+  else{
+    const have=new Set(LEDGER.map(e=>e.id));const prevHeads=[head(),d.ledger.length?d.ledger[d.ledger.length-1].hash:'GENESIS'];
+    const all=[...LEDGER,...d.ledger.filter(e=>!have.has(e.id))].sort((a,b)=>a.ts.localeCompare(b.ts)||a.seq-b.seq);
+    const added=all.length-LEDGER.length;
+    await DB.clear('ledger');LEDGER=[];let prev='GENESIS';
+    for(const ev of all){const n={...ev,seq:LEDGER.length+1,prev};delete n.hash;n.hash=await sha(canon(n));LEDGER.push(n);prev=n.hash}
+    const mk={id:uid(),seq:LEDGER.length+1,ts:new Date().toISOString(),op:'merge',eid:null,data:{prevHeads,added},prev};mk.hash=await sha(canon(mk));LEDGER.push(mk);
+    for(const ev of LEDGER)await DB.put('ledger',ev);
+    if(!SET.children.length)SET.children=d.settings.children||[];
+  }
+  await saveSettings();rebuild();await verifyChain();closeSheet();render();toast('Import complete');
+}
+function exportCSV(){
+  const cols=['seq','kind','occurred','logged_at','title','body','who','severity','status','sched_at','my_arrive','their_arrive','channel','direction','tone','amount','category','paid_by','reimbursement','tags','witnesses','voided','record_hash'];
+  const q=v=>{let s=String(v??'');if(/^[=+\-@]/.test(s))s="'"+s;return `"${s.replace(/"/g,'""')}"`};
+  const rows=entries().map(e=>[e.seq,e.kind,e.occurred,e.created,e.title,e.body||e.quote||'',e.who,e.severity,e.status,e.schedAt,e.myArrive,e.theirArrive,e.channel,e.dir,e.tone,e.amount,e.category,e.paidBy,e.reimb,(e.tags||[]).join('; '),e.witnesses,e.voided?e.voided.reason:'',e.hash].map(q).join(','));
+  const blob=new Blob([[cols.join(','),...rows].join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`custody-ledger-${dkey(new Date())}.csv`;a.click();
+}
+
+/* ---------- lock ---------- */
+let hiddenAt=0;
+function showLock(){
+  if(!SET.pin)return;
+  $('#lock').innerHTML=`<div style="font-size:42px">🔒</div><h2>Custody Ledger</h2><input id="pinIn" type="password" inputmode="numeric" autocomplete="off" placeholder="PIN" style="max-width:200px;text-align:center;font-size:22px"><div class="small mute" id="pinMsg"></div>`;
+  $('#lock').classList.add('on');
+  $('#pinIn').addEventListener('input',async e=>{if(await sha(SET.salt+e.target.value)===SET.pin){$('#lock').classList.remove('on')}else if(e.target.value.length>=SET.pinLen){$('#pinMsg').textContent='Incorrect';e.target.value=''}});
+  setTimeout(()=>$('#pinIn')?.focus(),50);
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)hiddenAt=Date.now();else if(SET.pin&&hiddenAt&&Date.now()-hiddenAt>60000)showLock()});
+
+/* ---------- one-line capture ---------- */
+const MIC=('SpeechRecognition' in window)||('webkitSpeechRecognition' in window);
+function splitClauses(t){return t.split(/\s*(?:[;]|,(?!\d)|\.(?=\s)|\bthen\b|\band\b(?=\s+(?:i\s+)?(?:took|drove|picked|dropped|gave|cooked|helped|bought|paid)))\s*/i).map(s=>s.trim()).filter(s=>s.length>2)}
+function classify(text){
+  const t=text.trim(),l=t.toLowerCase();if(!t)return null;
+  const am=l.match(/\$\s?(\d[\d,]*(?:\.\d{1,2})?)/);const amount=am?Number(am[1].replace(/,/g,'')):null;
+  const who=/^(she|he|they|my ex|ex|mom|dad|mother|father)\b/.test(l)?'other':'me';
+  const iSay=/^i\b/.test(l);
+  const kids='son|daughter|kids?|children|child'+SET.children.map(c=>'|'+c.name.toLowerCase().replace(/[^a-z0-9 ]/g,'')).filter(x=>x!=='|').join('');
+  const sup=a=>({kind:'support',pre:{action:a,who,amount,body:t}});
+  if(/\b(argu(ed|ment)|fight|fought|yell(ed|ing)|scream(ed|ing)|shout(ed|ing)|blew up|heated)\b/.test(l))return {kind:'conflict',pre:{body:t}};
+  if(/\b(no[- ]?show|didn'?t show|never showed|exchange|handoff|hand-off)\b/.test(l)||(/\b(late|cancel(l)?ed|denied)\b/.test(l)&&/\b(pick ?up|drop ?off|exchange|arriv|showed|came)\b/.test(l))){
+    let status='completed';
+    if(/no[- ]?show|didn'?t show|never showed/.test(l))status=iSay?'noshow_me':'noshow_other';
+    else if(/cancel/.test(l))status=iSay?'cancelled_me':'cancelled_other';
+    else if(/denied|refus/.test(l))status='denied';
+    else if(/late/.test(l))status=/\bi (was|am|ran|got|arrived|came)\b[^.]*\blate\b/.test(l)?'late_me':'late_other';
+    return {kind:'exchange',pre:{status,dir:/drop(ped)?[- ]?off/.test(l)?'dropoff':'pickup',body:t}};
+  }
+  if(amount&&/\b(gave|give|sent|venmo(ed)?|zelle(d)?|transferred|handed)\b/.test(l))return sup(/lunch/.test(l)?'Gave money (school lunch)':/\bgas\b|fuel/.test(l)?'Gave money (gas)':'Gave money (other)');
+  if(amount&&/\b(paid|bought|copay|bill|tuition|fee|receipt|cost|charged)\b/.test(l)){
+    const cat=/dentist|dental/.test(l)?'Dental':/doctor|pharmacy|copay|prescription|medical|urgent/.test(l)?'Medical':/clothes|shoes|jacket|coat/.test(l)?'Clothing':/school|tuition|supplies|fees?\b/.test(l)?'Education':/soccer|football|practice|lesson|team|camp/.test(l)?'Activities':/\bgas\b|fuel/.test(l)?'Transportation':/babysit|daycare|childcare/.test(l)?'Childcare':'Other';
+    return {kind:'expense',pre:{amount,category:cat,paidBy:who,body:t}};
+  }
+  if(/dentist|dental|orthodont/.test(l))return sup('Took to dentist');
+  if(/\b(doctor|pediatrician|urgent care|clinic|hospital|\ber\b)\b/.test(l))return sup('Took to doctor');
+  if(/(drop(ped)?[- ]?off|drove|took|walked).{0,30}school|school drop/.test(l))return sup('School drop-off');
+  if(/(pick(ed)? up|pickup|got).{0,30}school|school pick/.test(l)||new RegExp('pick(ed)? up (my )?('+kids+')\\b').test(l))return sup('School pickup');
+  if(/homework|reading with|studied with/.test(l))return sup('Homework help');
+  if(/\b(practice|game|lesson|recital|rehearsal|tournament|activity)\b/.test(l))return sup(/drove|took|dropp/.test(l)?'Drove to activity':'Attended game / event');
+  if(/\b(cooked|made dinner|made breakfast|made lunch)\b/.test(l))return sup('Cooked meal');
+  if(/\b(sick|fever|stayed home with|threw up)\b/.test(l))return sup('Cared for sick child');
+  if(/\bbought\b.*\b(clothes|shoes|supplies|backpack|jacket)\b/.test(l))return sup('Bought clothes / supplies');
+  if(/\b(threat|police|violat|withheld|didn'?t return|kept (him|her|them)|ignored)\b/.test(l))return {kind:'incident',pre:{body:t}};
+  if(/\b(text(ed)?|email(ed)?|call(ed)?|voicemail|messag(ed|e)|replied)\b/.test(l)){
+    const channel=/email/.test(l)?'email':/voicemail/.test(l)?'voicemail':/call/.test(l)?'call':'text';
+    return {kind:'comm',pre:{channel,dir:who==='other'||/\bfrom (her|him|them)\b/.test(l)?'in':'out',body:t}};
+  }
+  return null;
+}
+function showBatch(parts){
+  window._batch=parts;
+  openSheet('Log these separately?',`<p class="small mute" style="margin-bottom:8px">I found ${parts.length} things. Each becomes its own entry, dated now.</p>${parts.map(p=>`<div class="item" style="cursor:default"><div class="ic">🤝</div><div class="grow"><div class="t">${esc(p.pre.action)}${p.pre.amount?' · '+money(p.pre.amount):''}</div><div class="s">${esc(p.pre.who==='me'?SET.me:SET.other)} · ${esc(p.pre.body)}</div></div></div>`).join('')}<div class="row" style="margin-top:12px"><button class="btn grow" data-act="qcbatch">Log all ${parts.length}</button></div>`);
+}
+
+/* ---------- record strength ---------- */
+function recordStrength(){
+  const today=dkey(new Date()),parts=[];
+  let logged=0;for(let i=1;i<=14;i++)if(actual(addDays(today,-i)))logged++;
+  parts.push({k:'days',w:30,pct:logged/14,tip:`${14-logged} of the last 14 days have no “who had the kids” entry`,act:'go',r:'calendar',btn:'Fill in days'});
+  const rec=live().filter(e=>['incident','exchange','conflict','comm'].includes(e.kind)&&(e.occurred||'').slice(0,10)>=addDays(today,-60));
+  const withBody=rec.filter(e=>e.body);
+  if(withBody.length){const dirty=withBody.filter(e=>lint(e.body).issues.length);
+    parts.push({k:'facts',w:25,pct:1-dirty.length/withBody.length,tip:`${dirty.length} recent entr${dirty.length===1?'y uses':'ies use'} loaded words, guesses about intent, or absolutes`,act:'detail',id:dirty[0]&&dirty[0].id,btn:'Review one'})}
+  const ev=rec.filter(e=>e.kind==='incident'||e.kind==='conflict');
+  if(ev.length){const weak=ev.filter(e=>!((e.att||[]).length||e.witnesses||e.source));
+    parts.push({k:'evidence',w:25,pct:1-weak.length/ev.length,tip:`${weak.length} incident or conflict entr${weak.length===1?'y has':'ies have'} no photo, screenshot, witness or source`,act:'detail',id:weak[0]&&weak[0].id,btn:'Add support'})}
+  const ds=SET.lastBackup?Math.floor((Date.now()-new Date(SET.lastBackup))/864e5):null;
+  if(LEDGER.length)parts.push({k:'backup',w:20,pct:ds===null?0:Math.max(0,1-Math.max(0,ds-7)/21),tip:ds===null?'No backup yet':`Last backup ${ds} days ago`,act:'backup',btn:'Back up'});
+  const W=parts.reduce((x,q)=>x+q.w,0);
+  const score=W?Math.round(parts.reduce((x,q)=>x+q.w*q.pct,0)/W*100):0;
+  const nudges=parts.filter(q=>q.pct<0.8).sort((a,b)=>b.w*(1-b.pct)-a.w*(1-a.pct)).slice(0,3);
+  return {score,parts,nudges};
+}
+function rsCard(){
+  if(!LEDGER.length)return '';
+  const rs=recordStrength();
+  return `<div class="card"><div class="row"><h3 class="grow">Record strength</h3><b style="font-size:22px">${rs.score}</b><span class="mute small">/100</span></div><div class="bar" style="margin:8px 0"><i style="width:${rs.score}%"></i></div>${rs.nudges.length?rs.nudges.map(n=>`<div class="row" style="padding:6px 0"><div class="grow small">${esc(n.tip)}</div><button class="btn ghost sm" data-act="${n.act}" ${n.r?`data-r="${n.r}"`:''} ${n.id?`data-id="${n.id}"`:''}>${n.btn}</button></div>`).join(''):'<div class="small mute">Your record is in good shape. Keep logging.</div>'}</div>`;
+}
+
+/* ---------- reply cool-down ---------- */
+function startCooldown(sec){
+  clearInterval(window._cd);let left=sec;const cd=$('#cd'),btn=$('#rhCopy');
+  const paint=()=>{if(!cd)return;cd.innerHTML=`<b>Take two minutes before you reply.</b> <span class="mute">The message you pasted has charged language. A reply in kind is what the record will show. Copy unlocks in ${Math.floor(left/60)}:${pad(left%60)}.</span> <button class="btn ghost sm" data-act="rhskip">Skip</button>`};
+  paint();
+  window._cd=setInterval(()=>{left--;if(left<=0){clearInterval(window._cd);if(btn)btn.disabled=false;if(cd)cd.innerHTML='<span class="mute">Cool-down finished.</span>'}else paint()},1000);
+}
+
+/* ---------- verify a file ---------- */
+async function readBackup(file){
+  let data=JSON.parse(await file.text());
+  if(data.enc){const pass=prompt('Passphrase for this backup:');if(!pass)return null;
+    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:new Uint8Array(unb64(data.iv))},await deriveKey(pass,new Uint8Array(unb64(data.salt))),unb64(data.ct));
+    data=JSON.parse(new TextDecoder().decode(pt))}
+  if(data.app!=='custody-ledger')throw new Error('Not a Custody Ledger backup');
+  return data;
+}
+async function checkBundle(data){
+  const led=(data.ledger||[]).slice().sort((a,b)=>a.seq-b.seq);
+  const r=await verifyLedgerArray(led);
+  const blobs=new Map((data.blobs||[]).map(b=>[b.id,b]));
+  const atts=[];led.forEach(ev=>{((ev.data&&ev.data.att)||[]).concat((ev.data&&ev.data.addAtt)||[]).forEach(a=>atts.push(a))});
+  let okN=0,missing=0;const bad=[];
+  for(const a of atts){const b=blobs.get(a.id);if(!b){missing++;continue}const hh=await shaBuf(unb64(b.data));if(hh===a.hash)okN++;else bad.push(a.name)}
+  return {records:led.length,chain:r,first:led[0]&&led[0].ts,last:led.length?led[led.length-1].ts:null,head:r.ok?r.head:null,att:atts.length,okN,missing,bad,exportedAt:data.exportedAt};
+}
+async function verifyFile(file){
+  try{
+    const data=await readBackup(file);if(!data)return;
+    const r=await checkBundle(data);const good=r.chain.ok&&!r.bad.length;
+    openSheet('Verification result',`<div class="card flat" style="border-color:${good?'var(--good)':'var(--bad)'}"><b style="color:${good?'var(--good)':'var(--bad)'};font-size:17px">${good?'✓ Record is intact':'✗ Record fails verification'}</b>
+      <p class="small" style="margin:8px 0 0">${r.chain.ok?`All ${r.records} records link correctly. No record was changed, removed or inserted.`:`The chain breaks at record #${r.chain.at}. That record, or one before it, was altered, removed or reordered.`}</p></div>
+      <table style="margin-top:10px"><tr><td class="mute small" style="padding-right:12px">First record</td><td>${r.first?fTS(r.first):'—'}</td></tr><tr><td class="mute small">Last record</td><td>${r.last?fTS(r.last):'—'}</td></tr><tr><td class="mute small">File exported</td><td>${r.exportedAt?fTS(r.exportedAt):'—'}</td></tr><tr><td class="mute small">Attachments</td><td>${r.okN} of ${r.att} match their fingerprint${r.missing?`; ${r.missing} not included in this file`:''}${r.bad.length?`; <b style="color:var(--bad)">CHANGED: ${esc(r.bad.join(', '))}</b>`:''}</td></tr></table>
+      ${r.head?`<p class="small mute" style="word-break:break-all;margin-top:10px">Head hash<br>${r.head}</p>`:''}
+      <p class="small mute">This shows the file is internally consistent and unaltered since export. Record dates come from the preparer’s device clock. To show when the record existed, compare the head hash with one the preparer emailed earlier.</p>`);
+  }catch(e){toast('Could not read file: '+(e.name==='OperationError'?'wrong passphrase':e.message),4000)}
+}
+
+/* ---------- install guidance ---------- */
+let DEFERRED=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();DEFERRED=e;if(ROUTE==='settings')render(true)});
+const isStandalone=()=>(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+const isIOS=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isMacSafari=()=>/Macintosh/.test(navigator.userAgent)&&/Safari/.test(navigator.userAgent)&&!/Chrome|Chromium|Edg/.test(navigator.userAgent)&&!isIOS();
+function installCard(){
+  let body;
+  if(isStandalone())body='<b style="color:var(--good)">✓ Installed.</b> You are running the installed app.';
+  else if(location.protocol==='file:')body='You opened a local copy of the file. It works, but the browser may clear its storage. For a permanent install, open the app from its web address, add it to your Home Screen or Dock, and use that copy.';
+  else if(isIOS())body='<ol style="margin:0;padding-left:18px"><li>Tap the Share button in Safari (the square with an arrow).</li><li>Choose <b>Add to Home Screen</b>, then <b>Add</b>.</li><li>Open Custody Ledger from the new icon.</li></ol><p class="mute" style="margin:8px 0 0">The installed app keeps its own data, separate from Safari. Install before you start logging.</p>';
+  else if(isMacSafari())body='In Safari, choose <b>File, then Add to Dock…</b> (macOS Sonoma or later). Open it from the Dock after that.';
+  else if(DEFERRED)body='<button class="btn sm" data-act="install">Install app</button>';
+  else body='In Chrome or Edge, use the install icon in the address bar, or the browser menu and choose Install.';
+  return `<div class="card"><h3>Install on this device</h3><div class="small" style="margin-top:8px">${body}</div></div>`;
+}
+function installTip(){
+  let gone=false;try{gone=localStorage.getItem('cl-tip')==='1'}catch(e){}
+  if(gone||isStandalone()||!/^https?:$/.test(location.protocol)||!(isIOS()||isMacSafari()))return '';
+  return `<div class="card"><div class="row"><div class="grow"><b>Install this app</b><div class="small mute">${isIOS()?'Tap Share, then Add to Home Screen.':'In Safari: File, then Add to Dock.'} Install before you log anything. The installed app keeps its own data.</div></div><button class="btn ghost sm" data-act="dismisstip">Got it</button></div></div>`;
+}
+
+/* ---------- actions ---------- */
+const ACTS={
+  go:t=>{ROUTE=t.dataset.r;render()},
+  close:()=>closeSheet(),
+  new:t=>openEntry(t.dataset.k,null,t.dataset.pre?{action:t.dataset.pre}:undefined),
+  newon:t=>{closeSheet();openEntry(t.dataset.k);const el=$('#ef [name=occurred]');if(el)el.value=t.dataset.date+'T'+lnow().slice(11)},
+  newmenu:()=>openSheet('Add to ledger',`<div class="qa">${['incident','exchange','comm','conflict','expense','journal','support'].map(k=>`<button data-act="newfrom" data-k="${k}"><span>${KINDS[k].icon}</span>${KINDS[k].label}</button>`).join('')}</div>`),
+  newfrom:t=>{closeSheet();openEntry(t.dataset.k)},
+  detail:t=>openDetail(t.dataset.id),
+  amend:t=>{const e=ENT.find(x=>x.id===t.dataset.id);closeSheet();openEntry(e.kind,e)},
+  void:async t=>{const r=prompt('Reason for voiding (the entry stays on record, marked void):');if(!r)return;await append('void',t.dataset.id,{reason:r});closeSheet();render();toast('Voided — still on record')},
+  chip:t=>t.classList.toggle('on'),
+  nowfill:t=>{const el=$(`[name=${t.dataset.n}]`);el.value=lnow()},
+  geo:()=>{if(!navigator.geolocation)return toast('Location unavailable');$('#geoOut').textContent='Locating…';navigator.geolocation.getCurrentPosition(p=>{window._geo={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy,at:new Date().toISOString()};$('#geoOut').textContent=`${p.coords.latitude.toFixed(5)}, ${p.coords.longitude.toFixed(5)} (±${Math.round(p.coords.accuracy)}m)`},()=>{$('#geoOut').textContent='Permission denied'},{enableHighAccuracy:true,timeout:15000})},
+  dictate:t=>{const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R)return;const r=new R();r.lang=navigator.language||'en-US';r.interimResults=false;r.continuous=true;
+    const ta=$('#ef textarea');$('#dictOut').textContent='Listening… tap again to stop';
+    if(window._rec){window._rec.stop();window._rec=null;$('#dictOut').textContent='';return}
+    r.onresult=e=>{let s='';for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)s+=e.results[i][0].transcript+' ';ta.value+=(ta.value&&!ta.value.endsWith(' ')?' ':'')+s;ta.dispatchEvent(new Event('input',{bubbles:true}))};
+    r.onend=()=>{window._rec=null;const o=$('#dictOut');if(o)o.textContent=''};window._rec=r;r.start()},
+  fkind:t=>{FILTER.kind=t.dataset.v;render()},
+  cal:t=>{const d=+t.dataset.d;if(d===0)calMonth=dkey(new Date()).slice(0,7);else{const[y,m]=calMonth.split('-').map(Number);const n=new Date(y,m-1+d,1);calMonth=`${n.getFullYear()}-${pad(n.getMonth()+1)}`}render()},
+  day:t=>openDay(t.dataset.date),
+  install:async()=>{if(!DEFERRED)return;DEFERRED.prompt();try{await DEFERRED.userChoice}catch(e){}DEFERRED=null;render(true)},
+  dismisstip:()=>{try{localStorage.setItem('cl-tip','1')}catch(e){}render(true)},
+  lock:()=>{if(!SET.pin)return toast('Set a PIN in Settings first');showLock()},
+  togglekey:async t=>{const e=ENT.find(x=>x.id===t.dataset.id);if(!e)return;const was=!!e.key;await append('amend',e.id,{changes:{key:!was},reason:was?'Unmarked as key entry':'Marked as key entry',addAtt:[]});closeSheet();render(true);toast(was?'Unmarked':'Marked as key entry')},
+  qc:()=>{const el=$('#qc');const txt=(el&&el.value||'').trim();if(!txt)return toast('Type or say what happened');
+    const parts=splitClauses(txt).map(classify);
+    if(parts.length>1&&parts.every(x=>x&&x.kind==='support')){showBatch(parts);return}
+    const c=classify(txt);
+    if(c){openEntry(c.kind,null,c.pre);toast('Sorted as '+KINDS[c.kind].label.toLowerCase()+'. Check and save.')}
+    else{window._qcText=txt;openSheet('What kind of entry is this?',`<p class="mute small" style="margin-bottom:10px">${esc(txt)}</p><div class="qa">${['incident','exchange','comm','conflict','expense','journal','support'].map(k=>`<button data-act="qcpick" data-k="${k}"><span>${KINDS[k].icon}</span>${KINDS[k].label}</button>`).join('')}</div>`)}},
+  qcpick:t=>{closeSheet();openEntry(t.dataset.k,null,{body:window._qcText})},
+  qcbatch:async()=>{const ps=window._batch||[];for(const q of ps){await append('create',uid(),{kind:'support',title:q.pre.action+(q.pre.amount?' · '+money(q.pre.amount):''),occurred:lnow(),action:q.pre.action,who:q.pre.who,amount:q.pre.amount,body:q.pre.body,att:[]})}closeSheet();render();toast(ps.length+' entries logged')},
+  qcdict:()=>{const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R)return toast('Voice input is not available in this browser');const r=new R();r.lang=navigator.language||'en-US';r.interimResults=false;r.onresult=e=>{const el=$('#qc');if(el)el.value=e.results[0][0].transcript};r.onerror=()=>toast('Could not hear that');r.start();toast('Listening…')},
+  rhskip:()=>{clearInterval(window._cd);const b=$('#rhCopy');if(b)b.disabled=false;const c=$('#cd');if(c)c.innerHTML='<span class="mute">Cool-down skipped.</span>'},
+  verifyfile:()=>$('#verifyFileIn').click(),
+  resolve:async t=>{await append('amend',t.dataset.id,{changes:{outcome:'resolved'},reason:'Marked resolved',addAtt:[]});toast('Marked resolved');render(true)},
+  cftopic:t=>{CF_TOPIC=t.dataset.v;render(true)},
+  setday:t=>setDay(t.dataset.date,t.dataset.val),
+  rh:()=>{const txt=$('#rh').value;if(!txt.trim())return toast('Paste a message first');const b=biff(txt);
+    $('#rhOut').innerHTML=`<div class="card"><h3>${b.hostile?'Hostile content detected':'Tone check'}</h3><div class="lint" style="margin-top:10px">${lintHTML(txt)}</div>
+     ${b.hostile?'<p class="small">Don’t answer attacks, labels or bait. Reply only to the logistical content, and <b>log the original message</b> so the record shows it.</p>':''}
+     <h3 style="margin-top:12px">BIFF draft</h3><textarea id="rhDraft" style="min-height:190px;margin-top:8px">${esc(b.draft)}</textarea><div class="row wrap" style="margin-top:8px"><button class="btn sm" id="rhCopy" data-act="rhcopy" ${b.hostile?'disabled':''}>Copy draft</button><button class="btn ghost sm" data-act="rhcheck">Re-check my edits</button></div>${b.hostile?'<div class="small" id="cd" style="margin-top:10px"></div>':''}<div class="lint" id="rhLint" style="margin-top:10px"></div></div>`;if(b.hostile)startCooldown(120)},
+  rhcopy:()=>{navigator.clipboard.writeText($('#rhDraft').value);toast('Copied')},
+  rhcheck:()=>{$('#rhLint').innerHTML=lintHTML($('#rhDraft').value)},
+  rhlog:()=>{const txt=$('#rh').value;openEntry('comm');const ta=$('#ef textarea');ta.value=txt;ta.dispatchEvent(new Event('input',{bubbles:true}))},
+  rclose:()=>{$('#reportView').classList.remove('on')},
+  rprint:()=>window.print(),
+  rdl:()=>{const doc=`<!doctype html><meta charset="utf-8"><title>Parenting Record</title><style>${[...document.styleSheets[0].cssRules].filter(r=>r.type===1&&r.cssText.includes('.paper')).map(r=>r.cssText).join('\n')}body{background:#fff}</style>${window._reportHTML}`;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([doc],{type:'text/html'}));a.download=`parenting-record-${dkey(new Date())}.html`;a.click()},
+  addkid:async()=>{const n=$('#kidName').value.trim();if(!n)return;SET.children.push({id:uid(),name:n});await saveSettings();render()},
+  rmkid:async t=>{SET.children=SET.children.filter(c=>c.id!==t.dataset.id);await saveSettings();render()},
+  savesched:async()=>{
+    const alt=$('#schAlt').checked,weeks=[Array(7).fill(''),Array(7).fill('')];
+    $$('#schedBox select').forEach(s=>{weeks[+s.dataset.wk][+s.dataset.dow]=s.value});
+    if(!alt)weeks[1]=weeks[0].slice();
+    await append('create',uid(),{kind:'schedule',title:'Schedule',occurred:$('#schEff').value+'T00:00',effective:$('#schEff').value,anchor:mondayOf($('#schAnchor').value),alternate:alt,weeks});
+    toast('Schedule saved');render()},
+  setpin:async()=>{const p=prompt('Choose a numeric PIN (4–8 digits):');if(!p||!/^\d{4,8}$/.test(p))return toast('PIN must be 4–8 digits');SET.salt=uid();SET.pin=await sha(SET.salt+p);SET.pinLen=p.length;await saveSettings();render();toast('PIN set')},
+  rmpin:async()=>{SET.pin=null;SET.salt=null;await saveSettings();render()},
+  backup:()=>exportBackup(),
+  restore:()=>$('#restoreFile').click(),
+  csv:()=>exportCSV(),
+  verify:async()=>{await verifyChain();render();toast(CHAIN_MSG)},
+  anchor:()=>{const body=`Custody Ledger anchor\nRecords: ${LEDGER.length}\nHead hash: ${head()}\nDevice time: ${new Date().toISOString()}`;location.href='mailto:?subject='+encodeURIComponent('Custody Ledger anchor '+dkey(new Date()))+'&body='+encodeURIComponent(body)},
+  wipe:async()=>{if(!confirm('Erase ALL records, attachments and settings on this device?'))return;if(prompt('Type ERASE to confirm')!=='ERASE')return;await DB.clear('ledger');await DB.clear('blobs');await DB.clear('kv');SET={...DEFAULT_SETTINGS};LEDGER=[];rebuild();await verifyChain();render();toast('Erased')}
+};
+document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;e.stopPropagation();const f=ACTS[t.dataset.act];if(f)f(t,e)});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.dataset&&t.dataset.lint){const box=$('#lint-'+t.name);if(box)box.innerHTML=lintHTML(t.value)}
+  if(t.id==='fq'){FILTER.q=t.value;clearTimeout(window._fq);window._fq=setTimeout(()=>{render(true);const el=$('#fq');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length)}},250)}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='ftag'){FILTER.tag=t.value;render()}
+  if(t.id==='ffrom'){FILTER.from=t.value;render()}
+  if(t.id==='fto'){FILTER.to=t.value;render()}
+  if(t.id==='schAlt')$('#wkB').style.display=t.checked?'':'none';
+  if(t.id==='restoreFile'&&t.files[0]){importBackup(t.files[0]);t.value=''}
+  if(t.id==='verifyFileIn'&&t.files[0]){verifyFile(t.files[0]);t.value=''}
+});
+document.addEventListener('keydown',e=>{if(e.target&&e.target.id==='qc'&&e.key==='Enter'){e.preventDefault();ACTS.qc()}});
+document.addEventListener('submit',async e=>{
+  if(e.target.id==='sf'){e.preventDefault();const f=new FormData(e.target);SET.me=f.get('me').trim()||'Me';SET.other=f.get('other').trim()||'Other parent';SET.caseNo=f.get('caseNo').trim();SET.court=f.get('court').trim();await saveSettings();toast('Saved');render()}
+  if(e.target.id==='rf'){e.preventDefault();const f=new FormData(e.target);const kinds=$$('[data-chips=kinds] .chip.on',e.target).map(x=>x.dataset.v);
+    const btn=$('button:not([type=button])',e.target);btn.disabled=true;btn.textContent='Building…';
+    try{showReport(await buildReport({from:f.get('from'),to:f.get('to'),kinds,photos:!!f.get('photos'),voided:!!f.get('voided'),positive:!!f.get('positive'),keyOnly:!!f.get('keyOnly'),decl:!!f.get('decl')}))}
+    catch(err){toast('Report failed: '+err.message)}
+    btn.disabled=false;btn.textContent='Build report'}
+});
+
+/* ---------- boot ---------- */
+function makeIcon(){
+  if($('#touchIcon').getAttribute('href'))return;
+  try{const c=document.createElement('canvas');c.width=c.height=180;const x=c.getContext('2d');
+    x.fillStyle='#0f172a';x.fillRect(0,0,180,180);x.strokeStyle='#2dd4bf';x.lineWidth=9;x.lineCap='round';
+    x.beginPath();x.moveTo(90,36);x.lineTo(90,140);x.moveTo(50,140);x.lineTo(130,140);x.moveTo(40,62);x.lineTo(140,62);x.stroke();
+    [[40,62],[140,62]].forEach(([a,b])=>{x.beginPath();x.moveTo(a,b);x.lineTo(a-22,b+40);x.lineTo(a+22,b+40);x.closePath();x.stroke()});
+    $('#touchIcon').href=c.toDataURL('image/png')}catch(e){}
+}
+window.addEventListener('unhandledrejection',e=>toast('Error: '+((e.reason&&e.reason.message)||e.reason),5000));
+window.addEventListener('error',e=>toast('Error: '+e.message,5000));
+(async function(){
+  makeIcon();
+  if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
+  try{await DB.open()}catch(e){console.error(e);DB.mem={kv:new Map(),blobs:new Map(),ledger:new Map()}}
+  try{await loadAll()}catch(e){console.error(e);toast('Could not load saved data: '+e.message,6000)}
+  render();showLock();
+  if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+})();
+</script>
+</body>
+</html>
