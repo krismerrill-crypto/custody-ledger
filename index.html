@@ -104,6 +104,61 @@ label.ck{display:flex;gap:10px;align-items:center;margin:0 0 12px;font-weight:60
 .paper img{max-width:100%;max-height:340px;border:1px solid #999}
 .paper .sig{margin-top:40px;display:flex;gap:40px}.paper .sig div{flex:1;border-top:1px solid #111;padding-top:4px;font-size:12px}
 .paper .mono{font-family:ui-monospace,Menlo,monospace;font-size:11px;word-break:break-all}
+
+/* ---- game layer ---- */
+:root{--hero1:#0f766e;--hero2:#134e4a}
+.hero{position:relative;overflow:hidden;border-radius:22px;padding:16px;margin-bottom:14px;color:#fff;background:linear-gradient(135deg,var(--hero1),var(--hero2));box-shadow:var(--shadow)}
+.hero .decor{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hero .decor i{position:absolute;font-style:normal;font-size:26px;opacity:.28;animation:flt 7s ease-in-out infinite}
+@keyframes flt{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-10px) rotate(6deg)}}
+.hero .hrow{position:relative;display:flex;align-items:center;gap:14px}
+.hero .ring{position:relative;width:64px;height:64px;flex:none}
+.hero .ring svg{width:64px;height:64px;transform:rotate(-90deg)}
+.hero .ring circle{fill:none;stroke-width:6}
+.hero .ring .tr{stroke:rgba(255,255,255,.25)}.hero .ring .pg{stroke:#fff;stroke-linecap:round;transition:stroke-dashoffset .9s cubic-bezier(.2,.8,.2,1)}
+.hero .ring span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px}
+.hero .hello{font-size:13px;opacity:.9;font-weight:600}
+.hero .ttl{font-size:19px;font-weight:900;letter-spacing:-.02em;margin:1px 0 6px}
+.hero .xpbar{height:8px;border-radius:6px;background:rgba(255,255,255,.25);overflow:hidden}
+.hero .xpbar i{display:block;height:100%;background:#fff;border-radius:6px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.hero .xpl{font-size:11.5px;opacity:.9;margin-top:4px;font-weight:600}
+.hero .flame{text-align:center;flex:none;background:rgba(255,255,255,.16);border-radius:14px;padding:8px 10px;cursor:pointer;border:0;color:#fff;font-family:inherit}
+.hero .flame b{display:block;font-size:20px;line-height:1.1}.hero .flame small{font-size:10.5px;font-weight:700;opacity:.9}
+.hero .flame.hot b{animation:pls 1.6s ease-in-out infinite}
+@keyframes pls{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+.hero .tag{position:relative;font-size:12.5px;opacity:.92;margin:12px 0 0}
+.quests{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.quest{border:0;border-radius:14px;padding:9px 8px;background:rgba(255,255,255,.16);color:#fff;font:700 12px/1.25 -apple-system,sans-serif;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-height:62px}
+.quest .qk{font-size:18px}
+.quest.done{background:#fff;color:#14532d;animation:pop .5s}
+.quest.done .qk{color:#16a34a}
+@keyframes pop{0%{transform:scale(.9)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+.qtiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+@media(min-width:700px){.qtiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.qt{border:0;border-radius:18px;padding:14px 12px;color:#fff;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-height:104px;font-family:inherit;background:linear-gradient(140deg,hsl(var(--h) 72% 46%),hsl(calc(var(--h) + 28) 70% 36%));box-shadow:0 6px 16px -6px hsl(var(--h) 70% 30% / .7);transition:transform .12s}
+.qt:active{transform:scale(.95)}
+.qt .qi{font-size:30px;line-height:1}.qt .ql{font-weight:800;font-size:14px;line-height:1.2}.qt .qs{font-size:11px;opacity:.85;font-weight:600;margin-top:auto}
+.chip.kid{border:1.5px solid var(--kc)}.chip.kid.on{background:var(--kc);color:#fff}
+.kav{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:15px;margin-right:6px;background:var(--kc)}
+.wk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}
+@media(max-width:480px){.wk{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.wk div{background:var(--chip);border-radius:14px;padding:10px;text-align:center}
+.wk b{display:block;font-size:22px;letter-spacing:-.02em}.wk small{color:var(--mute);font-weight:700;font-size:11px}
+.trow{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.tb{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;background:linear-gradient(140deg,var(--accent),var(--hero2));color:#fff;border:0}
+.tb.off{background:var(--chip);filter:grayscale(1);opacity:.55}
+.bgrid{display:grid;gap:10px}
+.bg{display:flex;gap:12px;align-items:center;padding:10px;border-radius:14px;background:var(--chip)}
+.bg .tb{flex:none}.bg.off .tb{background:var(--panel)}
+.bg .bar{margin-top:5px}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:300;width:100%;height:100%}
+.xpf{position:fixed;left:50%;top:calc(70px + env(safe-area-inset-top));transform:translateX(-50%);z-index:310;background:var(--accent);color:var(--accent-ink);font-weight:900;font-size:20px;padding:8px 18px;border-radius:999px;box-shadow:var(--shadow);animation:xpup 1.6s ease-out forwards;pointer-events:none}
+@keyframes xpup{0%{opacity:0;transform:translate(-50%,16px) scale(.8)}15%{opacity:1;transform:translate(-50%,0) scale(1.1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-28px) scale(1)}}
+.cele{position:fixed;inset:0;z-index:320;background:rgba(2,6,23,.6);display:flex;align-items:center;justify-content:center;padding:24px}
+.cele .cc{background:var(--panel);color:var(--ink);border-radius:26px;padding:26px 22px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4);animation:pop .55s}
+.cele .big{font-size:64px;line-height:1.1}.cele h2{font-size:26px;margin:6px 0 2px;letter-spacing:-.02em}.cele p{margin:0 0 12px;color:var(--mute)}
+.cele .nb{display:flex;gap:10px;align-items:center;text-align:left;background:var(--chip);border-radius:14px;padding:10px;margin:8px 0}
+@media (prefers-reduced-motion:reduce){.hero .decor i,.hero .flame.hot b,.quest.done,.cele .cc,.xpf{animation:none!important}.hero .ring .pg,.hero .xpbar i{transition:none}}
 @media print{
   body>*:not(#reportView){display:none!important}
   #reportView{position:static;background:#fff;overflow:visible;display:block!important}
@@ -207,7 +262,7 @@ const DB={
 };
 
 /* ---------- state ---------- */
-const DEFAULT_SETTINGS={me:'Me',other:'Other parent',children:[],caseNo:'',court:'',pin:null,salt:null,lastBackup:null,qbtns:[],created:new Date().toISOString()};
+const DEFAULT_SETTINGS={me:'Me',other:'Other parent',children:[],caseNo:'',court:'',pin:null,salt:null,lastBackup:null,qbtns:[],game:{on:true,sound:true,theme:'auto'},created:new Date().toISOString()};
 let SET={...DEFAULT_SETTINGS};
 let LEDGER=[],ENT=[],SCHEDS=[],ACT=new Map(),CHAIN_OK=true,CHAIN_MSG='';
 let ROUTE='home',FILTER={q:'',kind:'',tag:'',from:'',to:''};
@@ -215,7 +270,7 @@ let calMonth=dkey(new Date()).slice(0,7);
 
 async function saveSettings(){await DB.put('kv',SET,'settings')}
 async function loadAll(){
-  const s=await DB.get('kv','settings');if(s)SET={...DEFAULT_SETTINGS,...s};if(!Array.isArray(SET.qbtns))SET.qbtns=[];
+  const s=await DB.get('kv','settings');if(s)SET={...DEFAULT_SETTINGS,...s};if(!Array.isArray(SET.qbtns))SET.qbtns=[];SET.game={on:true,sound:true,theme:'auto',...(SET.game||{})};
   LEDGER=(await DB.all('ledger')).sort((a,b)=>a.seq-b.seq);
   rebuild();await verifyChain();
 }
@@ -223,10 +278,11 @@ const head=()=>LEDGER.length?LEDGER[LEDGER.length-1].hash:'GENESIS';
 let _q=Promise.resolve();
 function append(op,eid,data){const run=()=>appendNow(op,eid,data);const p=_q.then(run,run);_q=p.catch(()=>{});return p}
 async function appendNow(op,eid,data){
+  const g0=(op==='create'&&typeof gameOn==='function'&&gameOn())?gameSnap():null;
   const ev={id:uid(),seq:LEDGER.length+1,ts:new Date().toISOString(),op,eid,data,prev:head()};
   ev.hash=await sha(canon(ev));
   await Promise.race([DB.put('ledger',ev),new Promise((_,rj)=>setTimeout(()=>rj(new Error('Storage did not respond')),8000))]);
-  LEDGER.push(ev);if(CHAIN_OK)CHAIN_MSG=`${LEDGER.length} records verified`;rebuild();return ev;
+  LEDGER.push(ev);if(CHAIN_OK)CHAIN_MSG=`${LEDGER.length} records verified`;rebuild();if(g0){try{gameAfter(g0)}catch(e){console.error(e)}}return ev;
 }
 async function verifyLedgerArray(arr){
   let prev='GENESIS';
@@ -383,12 +439,12 @@ function fieldHTML(f,v){
   if(f.t==='number')return `<label class="f"><span>${f.l}</span><input name="${f.n}" type="number" inputmode="decimal" step="0.01" value="${esc(val)}"></label>`;
   return `<label class="f"><span>${f.l}</span><input name="${f.n}" type="text" value="${esc(val)}" placeholder="${esc(f.ph||'')}"></label>`;
 }
-function chipsHTML(name,list,sel){return `<div class="f"><span class="mute small" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em">${name==='tags'?'Best-interest factors':'Children involved'}</span><div class="chips" style="margin-top:5px" data-chips="${name}">${list.map(x=>`<button type="button" class="chip ${sel.includes(x.v)?'on':''}" data-act="chip" data-v="${esc(x.v)}">${esc(x.l)}</button>`).join('')}</div></div>`}
+function chipsHTML(name,list,sel){return `<div class="f"><span class="mute small" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em">${name==='tags'?'Best-interest factors':'Children involved'}</span><div class="chips" style="margin-top:5px" data-chips="${name}">${list.map(x=>`<button type="button" class="chip${x.c?' kid':''} ${sel.includes(x.v)?'on':''}"${x.c?` style="--kc:${x.c}"`:''} data-act="chip" data-v="${esc(x.v)}">${esc(x.l)}</button>`).join('')}</div></div>`}
 
 function entryForm(kind,e,pre){
   const amend=!!e;const now=lnow();
   const f=F[kind];
-  const kids=SET.children.map(c=>({v:c.id,l:c.name}));
+  const kids=SET.children.map(c=>({v:c.id,l:kidLabel(c),c:kidOf(c).color}));
   const top=`<label class="f"><span>When it happened</span><div class="row"><input type="datetime-local" name="occurred" value="${esc(e?.occurred||now)}"><button type="button" class="btn ghost sm" data-act="nowfill" data-n="occurred">Now</button></div></label>
   <label class="f"><span>Short title</span><input name="title" value="${esc(e?.title||'')}" placeholder="Optional — auto-filled if blank"></label>
   <label class="f"><span>Corroborated by (optional)</span><input name="source" value="${esc(e?.source||pre?.source||'')}" placeholder="school email, receipt, witness"></label>`;
@@ -517,7 +573,7 @@ function renderNav(){
   $('#bar').innerHTML=m.map(([k,i,l])=>`<button class="${(k==='more'?moreOn:ROUTE===k)?'on':''}" data-act="go" data-r="${k}"><span>${i}</span>${l}</button>`).join('');
 }
 const BANNER='<div class="card" style="border-color:var(--warn)"><b style="color:var(--warn)">⚠ Storage is blocked here</b><div class="small">This browser is not letting the app save data, so nothing is kept after you close the page. Open the file directly in Safari or Chrome (not inside a preview pane or private window), or host it at an https address. You can keep using it and export a backup before you leave.</div></div>';
-function render(keep){clearInterval(window._cd);renderNav();const v={home:vHome,timeline:vTimeline,calendar:vCalendar,insights:vInsights,conflict:vConflict,report:vReport,tools:vTools,settings:vSettings,more:vMore}[ROUTE]||vHome;$('#main').innerHTML=(DB.mem?BANNER:'')+v();if(!keep)window.scrollTo(0,0);afterRender()}
+function render(keep){clearInterval(window._cd);try{applySeason()}catch(e){}renderNav();const v={home:vHome,timeline:vTimeline,calendar:vCalendar,insights:vInsights,conflict:vConflict,report:vReport,tools:vTools,settings:vSettings,more:vMore}[ROUTE]||vHome;$('#main').innerHTML=(DB.mem?BANNER:'')+v();if(!keep)window.scrollTo(0,0);afterRender()}
 function afterRender(){if(ROUTE==='insights'){/* static */}}
 const realAmends=e=>e.amends.filter(a=>!(Object.keys(a.changes||{}).length===1&&'key' in a.changes));
 function item(e){
@@ -543,14 +599,15 @@ function vHome(){
   ${alerts}
   ${(!SET.children.length&&SET.me==='Me'&&!SCHEDS.length&&LEDGER.length<3)?`<div class="card"><h3>Set up in a minute</h3><div class="small mute" style="margin:2px 0 8px">Add your name, the children and your court-ordered schedule. Everything stays on this device.</div><button class="btn sm" data-act="go" data-r="settings">Open settings</button></div>`:''}
   ${installTip()}
-  <div class="card"><div class="row"><div class="grow"><div class="mute small">TODAY · ${new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}</div>
+  ${gameHero()}
+  <div class="card" id="todayCard"><div class="row"><div class="grow"><div class="mute small">TODAY · ${new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}</div>
    <div style="font-size:18px;font-weight:800;margin-top:2px">${ac?`Logged: ${nm[ac]}`:pl?`Planned with ${nm[pl]}`:'No schedule set'}</div></div>
    ${ac?'':['me','other','split'].map(v=>`<button class="btn ghost sm" data-act="setday" data-date="${today}" data-val="${v}">${v==='split'?'Split':v==='me'?'Me':'Them'}</button>`).join('')}</div></div>
   <div class="card"><h3>Log it in one line</h3><div class="small mute" style="margin:2px 0 8px">Type or say what happened. It is sorted into the right entry for you to check.</div><div class="row"><input id="qc" placeholder="Gave Emma $300 for lunch" autocomplete="off"><button class="btn" data-act="qc">Log</button>${MIC?'<button class="btn ghost" data-act="qcdict" aria-label="Dictate">🎙</button>':''}</div></div>
   ${qbHome()}
   <div class="qa" style="margin-bottom:14px">${['incident','exchange','comm','conflict','expense','journal','support'].map(k=>`<button data-act="new" data-k="${k}"><span>${KINDS[k].icon}</span>${KINDS[k].label}</button>`).join('')}<button data-act="go" data-r="tools"><span>✍️</span>Reply helper</button></div>
   <div class="card"><h3>Quick caregiving log</h3><div class="small mute" style="margin:2px 0 8px">Tap what you did today — any day, including the other parent’s.</div><div class="chips">${QUICK.map(a=>`<button class="chip" data-act="new" data-k="support" data-pre="${esc(a)}">${esc(a)}</button>`).join('')}</div></div>
-  ${rsCard()}
+  ${rsCard()}${gameWeek()}${gameTrophies()}
   ${missing.length?`<div class="card"><h3>Unlogged days — who had the kids?</h3><div class="small mute" style="margin-bottom:4px">Ten seconds a day builds an unassailable parenting-time record.</div>${miss}${missing.length>3?`<div class="small mute" style="margin-top:6px">+${missing.length-3} more this week — use the Calendar.</div>`:''}</div>`:''}
   <div class="card"><div class="row"><h3 class="grow">Recent entries</h3><button class="btn ghost sm" data-act="go" data-r="timeline">All</button></div>${last.length?last.map(item).join(''):'<p class="mute">Nothing yet. Tap a button above to log your first entry.</p>'}</div>
   <div class="small mute">Integrity: <b style="color:${CHAIN_OK?'var(--good)':'var(--bad)'}">${CHAIN_OK?'✓ ':''}${esc(CHAIN_MSG)}</b></div>`;
@@ -814,7 +871,8 @@ function vSettings(){
   return `<h1>Settings</h1>
   ${installCard()}
   <div class="card"><h3>You &amp; the case</h3><form id="sf" style="margin-top:10px"><div class="grid g2"><label class="f"><span>Your name</span><input name="me" value="${esc(SET.me==='Me'?'':SET.me)}" placeholder="Me"></label><label class="f"><span>Other parent</span><input name="other" value="${esc(SET.other==='Other parent'?'':SET.other)}" placeholder="Other parent"></label><label class="f"><span>Case number</span><input name="caseNo" value="${esc(SET.caseNo)}"></label><label class="f"><span>Court</span><input name="court" value="${esc(SET.court)}"></label></div><button class="btn sm">Save</button></form></div>
-  <div class="card"><h3>Children</h3><div class="chips" style="margin:10px 0">${SET.children.map(c=>`<span class="chip">${esc(c.name)} <b data-act="rmkid" data-id="${c.id}" style="margin-left:6px;cursor:pointer">✕</b></span>`).join('')||'<span class="mute">None added</span>'}</div><div class="row"><input id="kidName" placeholder="Child’s first name"><button class="btn sm" data-act="addkid">Add</button></div></div>
+  <div class="card"><h3>Children</h3><div class="chips" style="margin:10px 0">${SET.children.map(c=>`<span class="chip kid on" style="--kc:${kidOf(c).color}"><span data-act="kidedit" data-id="${c.id}" style="cursor:pointer">${esc(kidLabel(c))} ✎</span> <b data-act="rmkid" data-id="${c.id}" style="margin-left:6px;cursor:pointer">✕</b></span>`).join('')||'<span class="mute">None added</span>'}</div><div class="row"><input id="kidName" placeholder="Child’s first name"><button class="btn sm" data-act="addkid">Add</button></div></div>
+  ${gameCard()}
   ${qbCard()}
   <div class="card"><h3>Custody schedule</h3><p class="mute small">Enter what your order says. Changes are logged with an effective date, so old days keep the old schedule.</p>
    <div id="schedBox">${schedEditor(sch)}</div></div>
@@ -1056,7 +1114,7 @@ function qbAsksText(b){const a=[];if(b.askChild)a.push('which child');if(b.askDu
 function qbHome(){
   const L=qbList();
   if(!L.length)return `<div class="card"><h3>My quick buttons</h3><div class="small mute" style="margin:2px 0 8px">Make one-tap buttons for things you do again and again, like “Drove kids to school” or “Phone call with child”. One tap records the date, time and details.</div><button class="btn sm" data-act="qbsetup">Set up my buttons</button></div>`;
-  return `<div class="card"><div class="row"><h3 class="grow">My quick buttons</h3><button class="btn ghost sm" data-act="qbsetup">Edit</button></div><div class="chips" style="margin-top:10px">${L.map(b=>`<button class="chip qb" data-act="qbtap" data-id="${b.id}">${esc(b.icon||'✅')} ${esc(b.label)}</button>`).join('')}</div></div>`;
+  return `<div class="card"><div class="row"><h3 class="grow">My quick buttons</h3><button class="btn ghost sm" data-act="qbsetup">Edit</button></div><div class="qtiles">${L.map(b=>`<button class="qt" style="--h:${qbHue(b)}" data-act="qbtap" data-id="${b.id}"><span class="qi">${esc(b.icon||'✅')}</span><span class="ql">${esc(b.label)}</span><span class="qs">${(b.askChild||b.askDur||b.askAmt||b.askNote)?'Quick form':'One tap'}</span></button>`).join('')}</div></div>`;
 }
 function qbCard(){
   const L=qbList();
@@ -1091,7 +1149,7 @@ function undoToast(eid,label){
 function qbSheet(b){
   const kids=SET.children,needKid=b.askChild&&kids.length>1;
   let h=`<form id="qbf" data-id="${b.id}">`;
-  if(needKid)h+=`<div class="f"><span>Which child?</span><div class="chips" style="margin-top:5px" data-chips="children">${kids.map(c=>`<button type="button" class="chip" data-act="chip" data-v="${c.id}">${esc(c.name)}</button>`).join('')}<button type="button" class="chip" data-act="qball">All</button></div></div>`;
+  if(needKid)h+=`<div class="f"><span>Which child?</span><div class="chips" style="margin-top:5px" data-chips="children">${kids.map(c=>`<button type="button" class="chip kid" style="--kc:${kidOf(c).color}" data-act="chip" data-v="${c.id}">${esc(kidLabel(c))}</button>`).join('')}<button type="button" class="chip" data-act="qball">All</button></div></div>`;
   if(b.askDur)h+=`<div class="f"><span>How long?</span><div class="chips" style="margin-top:5px" id="qbDurs">${QB_DURS.map(m=>`<button type="button" class="chip" data-act="qbdur" data-m="${m}">${fDur(m)}</button>`).join('')}</div><input name="dur" type="number" inputmode="numeric" min="1" max="1440" placeholder="or type minutes" style="margin-top:8px"></div>`;
   if(b.askAmt)h+=`<label class="f"><span>Amount ($)</span><input name="amount" type="number" inputmode="decimal" step="0.01" min="0"></label>`;
   h+=`<label class="f"><span>${b.askDur?'Started':'When'}</span><div class="row"><input type="datetime-local" name="occurred" value="${lnow()}"><button type="button" class="btn ghost sm" data-act="nowfill" data-n="occurred">Now</button></div></label>${b.askDur?'<p class="small mute" style="margin:-6px 0 10px">Set to now minus the length, since you usually log right after. Change it if needed.</p>':''}`;
@@ -1118,12 +1176,202 @@ async function qbSave(form){
   catch(err){btn.disabled=false;toast('Could not save: '+err.message,5000)}
 }
 
+
+/* ---------- kids, seasons, game ---------- */
+const KID_EMOJI=['🦊','🐼','🦁','🐙','🦄','🐢','🐯','🐸','🦉','🐬','🚀','⚽'];
+const KID_COLORS=['#0ea5e9','#f97316','#a855f7','#ec4899','#22c55e','#eab308','#ef4444','#14b8a6'];
+function kidOf(c){const i=Math.max(0,SET.children.findIndex(x=>x.id===c.id));return {emoji:c.emoji||KID_EMOJI[i%KID_EMOJI.length],color:c.color||KID_COLORS[i%KID_COLORS.length]}}
+const kidLabel=c=>kidOf(c).emoji+' '+c.name;
+function qbHue(b){let h=0;const s=String(b.id||b.label);for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%360;return [172,24,262,340,200,45,140,300][h%8]+((h>>3)%20)}
+
+const SEASONS={
+ classic:{n:'Classic',e:'⚖️',decor:['⭐','✨','💫'],tag:'Steady wins. Log it, then go be with your kids.',conf:['#2dd4bf','#f59e0b','#a78bfa','#fb7185','#60a5fa']},
+ newyear:{n:'New Year',e:'🎆',decor:['🎆','🥂','✨','🎉'],tag:'Fresh year. Start the streak today.',a:['#7c3aed','#a78bfa','#fff','#14082e'],h:['#4c1d95','#db2777'],conf:['#facc15','#a78bfa','#f472b6','#38bdf8']},
+ winter:{n:'Winter',e:'❄️',decor:['❄️','⛄','🧣','❄️'],tag:'Cold outside, steady inside. Keep showing up.',a:['#0369a1','#7dd3fc','#fff','#06222f'],h:['#0c4a6e','#0369a1'],conf:['#7dd3fc','#e0f2fe','#38bdf8','#fff']},
+ valentine:{n:'Valentine’s',e:'💝',decor:['💝','💌','💗','🌹'],tag:'Love shows up in the small things. Log them.',a:['#be123c','#fb7185','#fff','#2a0610'],h:['#9f1239','#ec4899'],conf:['#fb7185','#f472b6','#fda4af','#fff']},
+ stpat:{n:'St. Patrick’s',e:'☘️',decor:['☘️','🌈','🍀','💚'],tag:'Lucky kids. Log the good stuff.',a:['#15803d','#4ade80','#fff','#052e16'],h:['#14532d','#16a34a'],conf:['#4ade80','#facc15','#22c55e','#fff']},
+ spring:{n:'Spring',e:'🌷',decor:['🌷','🐣','🦋','🌼'],tag:'New season, fresh habits. Log your day.',a:['#4d7c0f','#a3e635','#fff','#1a2e05'],h:['#3f6212','#be185d'],conf:['#f472b6','#a3e635','#facc15','#60a5fa']},
+ summer:{n:'Summer',e:'☀️',decor:['☀️','🏖️','🍉','🌴'],tag:'Summer days count. Log the adventures.',a:['#c2410c','#fdba74','#fff','#2a1204'],h:['#b45309','#ea580c'],conf:['#fdba74','#38bdf8','#facc15','#fb7185']},
+ july4:{n:'Fourth of July',e:'🎇',decor:['🎇','🇺🇸','🎆','⭐'],tag:'Fireworks and family. Log the memories.',a:['#1d4ed8','#93c5fd','#fff','#0b1b4a'],h:['#1e3a8a','#b91c1c'],conf:['#ef4444','#fff','#3b82f6','#facc15']},
+ school:{n:'Back to School',e:'🎒',decor:['🎒','✏️','📚','🍎'],tag:'School season. Drop-offs, pickups, homework. Log them all.',a:['#a16207','#fde047','#fff','#281c00'],h:['#1e3a8a','#a16207'],conf:['#fde047','#60a5fa','#f87171','#fff']},
+ fall:{n:'Fall',e:'🍂',decor:['🍂','🍁','🌰','🍄'],tag:'Crisp days, steady routines.',a:['#b45309','#fbbf24','#fff','#2a1700'],h:['#7c2d12','#b45309'],conf:['#fbbf24','#f97316','#dc2626','#a16207']},
+ halloween:{n:'Halloween',e:'🎃',decor:['🎃','🦇','👻','🕸️','🍬'],tag:'Spooky season. Log the wins, not the worries.',a:['#c2410c','#fb923c','#fff','#1c0a00'],h:['#1f1235','#c2410c'],conf:['#fb923c','#a855f7','#facc15','#fff']},
+ thanks:{n:'Thanksgiving',e:'🦃',decor:['🦃','🥧','🍂','🌽'],tag:'Grateful for every day you show up.',a:['#9a3412','#fdba74','#fff','#2a1204'],h:['#78350f','#b45309'],conf:['#fdba74','#f59e0b','#b45309','#fde68a']},
+ holiday:{n:'Holidays',e:'🎄',decor:['🎄','🎁','⛄','🌟','❄️'],tag:'Holiday magic. Keep the record, keep the memories.',a:['#b91c1c','#f87171','#fff','#2a0707'],h:['#14532d','#b91c1c'],conf:['#ef4444','#22c55e','#facc15','#fff']}
+};
+const SEASON_RANGES=[['01-01','01-07','newyear'],['01-08','01-31','winter'],['02-01','02-14','valentine'],['03-10','03-17','stpat'],['03-18','05-31','spring'],['06-01','06-27','summer'],['06-28','07-05','july4'],['07-06','08-09','summer'],['08-10','09-20','school'],['09-21','10-14','fall'],['10-15','11-01','halloween'],['11-02','11-30','thanks'],['12-01','12-31','holiday']];
+function seasonForDate(d){const md=pad(d.getMonth()+1)+'-'+pad(d.getDate());for(const [a,b,k] of SEASON_RANGES)if(md>=a&&md<=b)return k;return 'classic'}
+function curSeason(){const t=SET.game&&SET.game.theme;if(t&&t!=='auto'&&SEASONS[t])return t;return seasonForDate(new Date())}
+function applySeason(){
+  const k=curSeason(),S=SEASONS[k];let st=$('#seasonCss');
+  if(!st){st=document.createElement('style');st.id='seasonCss';document.head.appendChild(st)}
+  let css='';
+  if(S.a){css=`:root{--accent:${S.a[0]};--accent-ink:${S.a[2]};--hero1:${S.h[0]};--hero2:${S.h[1]}}@media (prefers-color-scheme:dark){:root{--accent:${S.a[1]};--accent-ink:${S.a[3]}}}`}
+  st.textContent=css;document.documentElement.dataset.season=k;
+}
+const greet=()=>{const h=new Date().getHours();return h<5?'Late night':h<12?'Good morning':h<17?'Good afternoon':'Good evening'};
+
+const gameOn=()=>!!(SET.game&&SET.game.on!==false);
+const XPK={day:5,support:10,journal:8,exchange:8,comm:3,incident:4,conflict:4,expense:5};
+const DAY_CAP=120,PERFECT_XP=25;
+const dayOf=e=>e.kind==='day'?e.date:(e.occurred||'').slice(0,10);
+function entryXP(e){
+  let x=XPK[e.kind]||3;
+  if(e.kind==='support'){if(e.durationMin)x+=4;if(e.amount)x+=3;const k=dayOf(e);if(e.who!=='other'&&(actual(k)||planned(k))==='other')x+=8}
+  return x+Math.min(3,(e.att||[]).length)*3;
+}
+function questsFor(k,byDay){
+  const L=byDay.get(k)||[];
+  return [!!ACT.get(k),L.some(e=>e.kind==='support'&&e.who!=='other'),L.some(e=>e.kind!=='day'&&((e.att||[]).length>0||(e.body||'').trim().length>=25||e.durationMin>0))];
+}
+const xpFor=L=>Math.round(50*Math.pow(Math.max(0,L-1),1.5));
+const LEVEL_NAMES=['Getting Started','Showing Up','Steady','Dependable','Anchor','Pillar','Rock Solid','Champion','Guardian','Hero','Legend','Legendary Parent'];
+function gameCalc(){
+  const L=ENT.filter(e=>!e.voided&&e.kind!=='schedule');
+  const byDay=new Map();L.forEach(e=>{const k=dayOf(e);if(!k)return;if(!byDay.has(k))byDay.set(k,[]);byDay.get(k).push(e)});
+  let xp=0,perfect=0;const dayXp=new Map();
+  byDay.forEach((arr,k)=>{let d=Math.min(DAY_CAP,arr.reduce((s,e)=>s+entryXP(e),0));if(questsFor(k,byDay).every(Boolean)){d+=PERFECT_XP;perfect++}dayXp.set(k,d);xp+=d});
+  const days=new Set(byDay.keys()),today=dkey(new Date());
+  let streak=0,k=days.has(today)?today:addDays(today,-1);while(days.has(k)){streak++;k=addDays(k,-1)}
+  let best=0,run=0;[...days].sort().forEach((d,i,a)=>{run=(i&&addDays(a[i-1],1)===d)?run+1:1;if(run>best)best=run});
+  let actBest=0;run=0;[...ACT.keys()].sort().forEach((d,i,a)=>{run=(i&&addDays(a[i-1],1)===d)?run+1:1;if(run>actBest)actBest=run});
+  const level=Math.floor(Math.pow(xp/50,1/1.5))+1,lo=xpFor(level),hi=xpFor(level+1);
+  const real=L.filter(e=>e.kind!=='day'),sup=real.filter(e=>e.kind==='support');
+  const ctx={n:real.length,streak,best,actBest,perfect,
+    proof:real.filter(e=>(e.att||[]).length).length,
+    theirDay:sup.filter(e=>e.who!=='other'&&(actual(dayOf(e))||planned(dayOf(e)))==='other').length,
+    calls:sup.filter(e=>/call/i.test(e.action||'')).length,
+    mins:sup.reduce((s,e)=>s+(e.durationMin||0),0),
+    notes:real.filter(e=>e.kind==='journal').length,
+    backup:SET.lastBackup&&(Date.now()-new Date(SET.lastBackup))<30*864e5?1:0,
+    qb:(SET.qbtns||[]).length};
+  const badges=BADGES.map(b=>{const cur=Math.min(b.t,b.f(ctx));return {id:b.id,icon:b.i,name:b.n,desc:b.d,cur,target:b.t,earned:cur>=b.t}});
+  const today0=questsFor(today,byDay);
+  return {xp,level,lo,hi,pct:Math.max(0,Math.min(100,Math.round((xp-lo)/(hi-lo)*100))),title:LEVEL_NAMES[Math.min(level-1,LEVEL_NAMES.length-1)],streak,best,perfect,badges,quests:today0,days,dayXp,byDay,ctx,todayXp:dayXp.get(today)||0};
+}
+const BADGES=[
+ {id:'first',i:'🌱',n:'First step',d:'Log your first entry',t:1,f:c=>c.n},
+ {id:'s3',i:'🔥',n:'On a roll',d:'Log 3 days in a row',t:3,f:c=>c.best},
+ {id:'s7',i:'⚡',n:'Week warrior',d:'Log 7 days in a row',t:7,f:c=>c.best},
+ {id:'s30',i:'🏆',n:'Unstoppable',d:'Log 30 days in a row',t:30,f:c=>c.best},
+ {id:'e25',i:'📚',n:'Building the record',d:'25 entries logged',t:25,f:c=>c.n},
+ {id:'e100',i:'💯',n:'Century',d:'100 entries logged',t:100,f:c=>c.n},
+ {id:'pw',i:'📅',n:'Perfect week',d:'Record who had the kids 7 days in a row',t:7,f:c=>c.actBest},
+ {id:'pd',i:'⭐',n:'Perfect day',d:'Finish all 3 daily quests',t:1,f:c=>c.perfect},
+ {id:'pd7',i:'🌟',n:'Seven perfect days',d:'Finish all 3 quests on 7 days',t:7,f:c=>c.perfect},
+ {id:'proof',i:'📎',n:'Evidence builder',d:'Attach proof to 10 entries',t:10,f:c=>c.proof},
+ {id:'their',i:'🤝',n:'Showed up on their time',d:'5 caregiving actions during the other parent’s time',t:5,f:c=>c.theirDay},
+ {id:'calls',i:'📞',n:'Stay connected',d:'Log 10 calls with the kids',t:10,f:c=>c.calls},
+ {id:'hours',i:'⏱️',n:'Time well spent',d:'Log 10 hours with or for the kids',t:600,f:c=>c.mins},
+ {id:'notes',i:'🧒',n:'Noticing the little things',d:'5 child notes',t:5,f:c=>c.notes},
+ {id:'bk',i:'💾',n:'Backed up',d:'Export a backup',t:1,f:c=>c.backup},
+ {id:'qb',i:'🧩',n:'Button builder',d:'Create 3 quick buttons',t:3,f:c=>c.qb}
+];
+function gameSnap(){const g=gameCalc();return {xp:g.xp,level:g.level,streak:g.streak,badges:new Set(g.badges.filter(b=>b.earned).map(b=>b.id)),perfect:g.perfect}}
+function gameAfter(g0){
+  const g1=gameCalc(),gain=g1.xp-g0.xp;
+  const nb=g1.badges.filter(b=>b.earned&&!g0.badges.has(b.id));
+  const lvl=g1.level>g0.level,perfect=g1.perfect>g0.perfect;
+  if(gain>0)xpFloat(gain);
+  const big=lvl||nb.length||perfect;
+  confetti(big?140:36);sfx(lvl?'level':nb.length?'badge':perfect?'quest':'xp');haptic(big);
+  if(big)setTimeout(()=>celeCard({lvl:lvl&&g1,nb,perfect,streak:g1.streak>g0.streak?g1.streak:0}),350);
+}
+function xpFloat(n){const o=$('.xpf');if(o)o.remove();const d=document.createElement('div');d.className='xpf';d.textContent='+'+n+' XP';document.body.appendChild(d);setTimeout(()=>d.remove(),1700)}
+function haptic(big){try{if(navigator.vibrate&&SET.game&&SET.game.sound!==false)navigator.vibrate(big?[20,40,20]:12)}catch(e){}}
+let _ac;
+function sfx(kind){
+  if(!(SET.game&&SET.game.sound!==false))return;
+  try{const A=window.AudioContext||window.webkitAudioContext;if(!A)return;_ac=_ac||new A();if(_ac.state==='suspended')_ac.resume();
+    const notes={xp:[660,880],level:[523,659,784,1047],badge:[784,988,1175],quest:[587,740,880]}[kind]||[660];
+    notes.forEach((f,i)=>{const t=_ac.currentTime+i*.09,o=_ac.createOscillator(),g=_ac.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.12,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.2);o.connect(g);g.connect(_ac.destination);o.start(t);o.stop(t+.22)})}catch(e){}
+}
+function confetti(n){
+  try{
+    if(typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    let c=$('#fx');if(!c){c=document.createElement('canvas');c.id='fx';document.body.appendChild(c)}
+    const ctx=c.getContext&&c.getContext('2d');if(!ctx)return;
+    const W=c.width=innerWidth,H=c.height=innerHeight,cols=SEASONS[curSeason()].conf;
+    const P=Array.from({length:n},()=>({x:W/2+(Math.random()-.5)*W*.3,y:H*.6,vx:(Math.random()-.5)*11,vy:-Math.random()*14-5,r:Math.random()*5+3,c:cols[Math.random()*cols.length|0],a:Math.random()*6,va:(Math.random()-.5)*.4}));
+    let f=0;(function step(){ctx.clearRect(0,0,W,H);P.forEach(p=>{p.vy+=.45;p.x+=p.vx;p.y+=p.vy;p.vx*=.99;p.a+=p.va;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.a);ctx.fillStyle=p.c;ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r);ctx.restore()});if(++f<110)requestAnimationFrame(step);else ctx.clearRect(0,0,W,H)})();
+  }catch(e){}
+}
+function celeCard(o){
+  const old=$('.cele');if(old)old.remove();
+  const d=document.createElement('div');d.className='cele';d.dataset.act='celeclose';
+  let big='🎉',h='Nice work!',p='Another day documented.';
+  if(o.lvl){big=SEASONS[curSeason()].e;h='Level '+o.lvl.level+'!';p=o.lvl.title}
+  else if(o.nb.length){big=o.nb[0].icon;h='Badge unlocked';p=o.nb[0].name}
+  else if(o.perfect){big='⭐';h='Perfect day!';p='All three quests done. +'+PERFECT_XP+' bonus XP.'}
+  d.innerHTML=`<div class="cc" data-act="celeclose"><div class="big">${big}</div><h2>${esc(h)}</h2><p>${esc(p)}</p>${o.lvl&&o.nb.length||(!o.lvl&&o.nb.length>1)?o.nb.map(b=>`<div class="nb"><span style="font-size:28px">${b.icon}</span><div><b>${esc(b.name)}</b><div class="small mute">${esc(b.desc)}</div></div></div>`).join(''):''}${o.streak>1?`<div class="nb"><span style="font-size:28px">🔥</span><div><b>${o.streak}-day streak</b><div class="small mute">Keep it going tomorrow.</div></div></div>`:''}<button class="btn" style="margin-top:12px;width:100%" data-act="celeclose">Keep going</button></div>`;
+  document.body.appendChild(d);clearTimeout(celeCard.t);celeCard.t=setTimeout(()=>d.remove(),6000);
+}
+function gameHero(){
+  if(!gameOn())return '';
+  const g=gameCalc(),S=SEASONS[curSeason()],C=2*Math.PI*27;
+  const name=SET.me&&SET.me!=='Me'?', '+esc(SET.me):'';
+  const Q=[['Who has the kids today?','📅'],['Do one thing for the kids','🤝'],['Add proof or detail','📎']];
+  const decor=S.decor.map((e,i)=>`<i style="left:${8+i*21}%;top:${i%2?58:6}%;animation-delay:${i*.9}s">${e}</i>`).join('');
+  return `<div class="hero"><div class="decor">${decor}</div>
+   <div class="hrow"><div class="ring"><svg viewBox="0 0 64 64"><circle class="tr" cx="32" cy="32" r="27"/><circle class="pg" cx="32" cy="32" r="27" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-g.pct/100)).toFixed(1)}"/></svg><span>${g.level}</span></div>
+    <div class="grow"><div class="hello">${greet()}${name}</div><div class="ttl">${esc(g.title)}</div><div class="xpbar"><i style="width:${g.pct}%"></i></div><div class="xpl">${g.xp} XP · ${Math.max(0,g.hi-g.xp)} to level ${g.level+1}</div></div>
+    <button class="flame ${g.streak?'hot':''}" data-act="trophies"><b>🔥 ${g.streak}</b><small>day streak</small></button></div>
+   <div class="quests">${Q.map((q,i)=>`<button class="quest ${g.quests[i]?'done':''}" data-act="questdo" data-q="${i}"><span class="qk">${g.quests[i]?'✅':q[1]}</span>${q[0]}</button>`).join('')}</div>
+   <p class="tag">${esc(S.tag)}${g.quests.every(Boolean)?' Perfect day, nice.':''}</p></div>`;
+}
+function gameWeek(){
+  if(!gameOn())return '';
+  const g=gameCalc(),today=dkey(new Date());let days=0,sup=0,mins=0,money0=0,xp=0;
+  for(let i=0;i<7;i++){const k=addDays(today,-i);if(g.days.has(k))days++;xp+=g.dayXp.get(k)||0;(g.byDay.get(k)||[]).forEach(e=>{if(e.kind==='support'&&e.who!=='other'){sup++;mins+=e.durationMin||0;money0+=e.amount||0}})}
+  const msg=days===7?'A perfect week. Every day documented.':days>=5?'Strong week. Keep the momentum.':days>=1?'Good start. Each logged day strengthens your record.':'A fresh week. Log today to start your streak.';
+  return `<div class="card"><h3>Your last 7 days</h3><div class="wk"><div><b>${days}/7</b><small>DAYS LOGGED</small></div><div><b>${sup}</b><small>THINGS FOR THE KIDS</small></div><div><b>${mins?fDur(mins):'—'}</b><small>TIME LOGGED</small></div><div><b>${xp}</b><small>XP EARNED</small></div></div><p class="small mute" style="margin:10px 0 0">${msg}${money0?` You put in ${money(money0)} toward the kids.`:''}</p></div>`;
+}
+function gameTrophies(){
+  if(!gameOn())return '';
+  const g=gameCalc(),got=g.badges.filter(b=>b.earned).length;
+  return `<div class="card"><div class="row"><h3 class="grow">Trophies · ${got}/${g.badges.length}</h3><button class="btn ghost sm" data-act="trophies">View all</button></div><div class="trow">${g.badges.slice(0,8).map(b=>`<div class="tb ${b.earned?'':'off'}" title="${esc(b.name)}">${b.icon}</div>`).join('')}</div></div>`;
+}
+function trophySheet(){
+  const g=gameCalc();
+  openSheet('Trophies & progress',`<div class="wk" style="margin-top:0"><div><b>${g.level}</b><small>LEVEL</small></div><div><b>${g.xp}</b><small>TOTAL XP</small></div><div><b>${g.streak}</b><small>CURRENT STREAK</small></div><div><b>${g.best}</b><small>BEST STREAK</small></div></div>
+   <p class="small mute" style="margin:12px 0">Scores are worked out on this device from your entries. They are never included in reports or exports.</p>
+   <div class="bgrid">${g.badges.map(b=>`<div class="bg ${b.earned?'':'off'}"><div class="tb ${b.earned?'':'off'}">${b.icon}</div><div class="grow"><b>${esc(b.name)}</b><div class="small mute">${esc(b.desc)}</div>${b.earned?'':`<div class="bar"><i style="width:${Math.round(b.cur/b.target*100)}%"></i></div><div class="small mute">${b.id==='hours'?fDur(b.cur)+' / '+fDur(b.target):b.cur+' / '+b.target}</div>`}</div>${b.earned?'<span class="badge g">Earned</span>':''}</div>`).join('')}</div>`);
+}
+function gameCard(){
+  const S=SEASONS,auto=SEASONS[seasonForDate(new Date())];
+  return `<div class="card"><h3>Game &amp; look</h3><p class="mute small">XP, levels, streaks, badges and daily quests make logging more fun. They never change your record and are never included in reports.</p>
+   <label class="ck"><input type="checkbox" id="gmOn" ${gameOn()?'checked':''}> Game mode</label>
+   <label class="ck"><input type="checkbox" id="gmSound" ${SET.game.sound!==false?'checked':''}> Sounds and vibration</label>
+   <label class="f"><span>Theme</span><select id="gmTheme"><option value="auto" ${SET.game.theme==='auto'?'selected':''}>Auto: ${auto.e} ${esc(auto.n==='Classic'?'Classic':auto.n)} (by date)</option>${Object.entries(S).map(([k,v])=>`<option value="${k}" ${SET.game.theme===k?'selected':''}>${v.e} ${esc(v.n)}</option>`).join('')}</select></label></div>`;
+}
+function kidSheet(id){
+  const c=SET.children.find(x=>x.id===id);if(!c)return;const o=kidOf(c);
+  openSheet('Customize '+c.name,`<p class="mute small" style="margin-bottom:8px">Pick an avatar and color. They show on this child’s buttons and entries.</p>
+   <div class="chips" style="margin-bottom:14px">${KID_EMOJI.map(e=>`<button class="chip ${o.emoji===e?'on':''}" style="font-size:20px" data-act="kidemoji" data-id="${id}" data-v="${e}">${e}</button>`).join('')}</div>
+   <div class="chips">${KID_COLORS.map(col=>`<button class="chip" aria-label="color" style="background:${col};border:3px solid ${o.color===col?'var(--ink)':'transparent'};width:44px;height:34px" data-act="kidcolor" data-id="${id}" data-v="${col}"></button>`).join('')}</div>
+   <button class="btn" style="width:100%;margin-top:16px" data-act="close">Done</button>`);
+}
+
 /* ---------- actions ---------- */
 const ACTS={
   go:t=>{ROUTE=t.dataset.r;render()},
 
+  celeclose:(t,e)=>{const c=$('.cele');if(c)c.remove()},
+  trophies:()=>trophySheet(),
+  kidedit:t=>kidSheet(t.dataset.id),
+  kidemoji:async t=>{const c=SET.children.find(x=>x.id===t.dataset.id);if(!c)return;c.emoji=t.dataset.v;await saveSettings();kidSheet(c.id);render(true)},
+  kidcolor:async t=>{const c=SET.children.find(x=>x.id===t.dataset.id);if(!c)return;c.color=t.dataset.v;await saveSettings();kidSheet(c.id);render(true)},
+  qdayset:async t=>{closeSheet();await setDay(t.dataset.date,t.dataset.val)},
+  questdo:t=>{
+    const q=Number(t.dataset.q),today=dkey(new Date());
+    if(q===0){if(ACT.get(today))return toast('Already logged today');
+      openSheet('Who has the kids today?',`<div class="qa">${[['me','🏠',SET.me],['other','🚗',SET.other],['split','🤝','Split']].map(([v,i,l])=>`<button data-act="qdayset" data-date="${today}" data-val="${v}"><span>${i}</span>${esc(l==='Me'?'Me':l)}</button>`).join('')}</div>`)}
+    else if(q===1){const L=qbList();
+      openSheet('What did you do for the kids?',`${L.length?`<div class="qtiles" style="margin-top:0">${L.map(b=>`<button class="qt" style="--h:${qbHue(b)}" data-act="qbtap" data-id="${b.id}"><span class="qi">${esc(b.icon||'✅')}</span><span class="ql">${esc(b.label)}</span></button>`).join('')}</div>`:''}<button class="btn ghost" style="width:100%;margin-top:12px" data-act="new" data-k="support">＋ Something else</button>`)}
+    else toast('Add a photo, a receipt, a length of time or a few facts to something you log today.',4000)},
+
   qbsetup:()=>{ROUTE='settings';render();setTimeout(()=>{const el=$('#qbCard');if(el&&el.scrollIntoView)el.scrollIntoView()},60)},
-  qbtap:async t=>{const b=qbFind(t.dataset.id);if(!b)return;const kids=SET.children;
+  qbtap:async t=>{const b=qbFind(t.dataset.id);if(!b)return;const kids=SET.children;if($('#sheetWrap').classList.contains('on'))closeSheet();
     if(!(b.askChild&&kids.length>1)&&!b.askDur&&!b.askAmt&&!b.askNote){
       try{const eid=await qbRecord(b,{children:kids.length===1?[kids[0].id]:[]});render(true);undoToast(eid,'Logged: '+b.label)}catch(err){toast('Could not save: '+err.message,5000)}
       return}
@@ -1211,6 +1459,9 @@ document.addEventListener('change',e=>{
   if(t.id==='ftag'){FILTER.tag=t.value;render()}
   if(t.id==='ffrom'){FILTER.from=t.value;render()}
   if(t.id==='fto'){FILTER.to=t.value;render()}
+  if(t.id==='gmOn'){SET.game={...SET.game,on:t.checked};saveSettings();render(true)}
+  if(t.id==='gmSound'){SET.game={...SET.game,sound:t.checked};saveSettings();if(t.checked)sfx('xp')}
+  if(t.id==='gmTheme'){SET.game={...SET.game,theme:t.value};saveSettings();render(true)}
   if(t.id==='schAlt')$('#wkB').style.display=t.checked?'':'none';
   if(t.id==='restoreFile'&&t.files[0]){importBackup(t.files[0]);t.value=''}
   if(t.id==='verifyFileIn'&&t.files[0]){verifyFile(t.files[0]);t.value=''}
