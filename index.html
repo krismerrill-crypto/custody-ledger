@@ -207,7 +207,7 @@ const DB={
 };
 
 /* ---------- state ---------- */
-const DEFAULT_SETTINGS={me:'Me',other:'Other parent',children:[],caseNo:'',court:'',pin:null,salt:null,lastBackup:null,created:new Date().toISOString()};
+const DEFAULT_SETTINGS={me:'Me',other:'Other parent',children:[],caseNo:'',court:'',pin:null,salt:null,lastBackup:null,qbtns:[],created:new Date().toISOString()};
 let SET={...DEFAULT_SETTINGS};
 let LEDGER=[],ENT=[],SCHEDS=[],ACT=new Map(),CHAIN_OK=true,CHAIN_MSG='';
 let ROUTE='home',FILTER={q:'',kind:'',tag:'',from:'',to:''};
@@ -215,7 +215,7 @@ let calMonth=dkey(new Date()).slice(0,7);
 
 async function saveSettings(){await DB.put('kv',SET,'settings')}
 async function loadAll(){
-  const s=await DB.get('kv','settings');if(s)SET={...DEFAULT_SETTINGS,...s};
+  const s=await DB.get('kv','settings');if(s)SET={...DEFAULT_SETTINGS,...s};if(!Array.isArray(SET.qbtns))SET.qbtns=[];
   LEDGER=(await DB.all('ledger')).sort((a,b)=>a.seq-b.seq);
   rebuild();await verifyChain();
 }
@@ -358,6 +358,7 @@ const F={
   {n:'action',t:'select',l:'What you did',o:SUPPORT_ACTIONS.map(x=>[x,x]),d:'School drop-off'},
   {n:'who',t:'select',l:'Done by',o:[['me','Me'],['other','Other parent']],d:'me'},
   {n:'amount',t:'number',l:'Money given or spent ($, optional)'},
+  {n:'durationMin',t:'number',l:'How long (minutes, optional)'},
   {n:'body',t:'textarea',l:'Details (optional)'}],
  journal:[
   {n:'mood',t:'select',l:'Child’s mood / presentation',o:[[5,'Happy, relaxed'],[4,'Good'],[3,'Neutral'],[2,'Withdrawn / upset'],[1,'Distressed']],d:3},
@@ -417,7 +418,7 @@ function readForm(form){
     d[el.name]=el.type==='checkbox'?el.checked:el.value;
   });
   ['severity','tone','mood','escalation'].forEach(k=>{if(d[k]!==undefined)d[k]=Number(d[k])});
-  ['amount','myShare'].forEach(k=>{if(d[k]!==undefined)d[k]=d[k]===''?null:Number(d[k])});
+  ['amount','myShare','durationMin'].forEach(k=>{if(d[k]!==undefined)d[k]=d[k]===''?null:Number(d[k])});
   $$('[data-chips]',form).forEach(c=>{d[c.dataset.chips]=$$('.chip.on',c).map(x=>x.dataset.v)});
   if(window._geo)d.loc=window._geo;
   return d;
@@ -475,7 +476,7 @@ function fieldsList(e){
   if(e.kind==='expense'){add('Amount',money(e.amount||0));add('Category',e.category);add('Paid by',e.paidBy==='me'?'Me':'Other parent');add('My share',(e.myShare??50)+'%');add('Reimbursement',e.reimb)}
   if(e.kind==='journal'){add('Mood',['','Distressed','Withdrawn / upset','Neutral','Good','Happy, relaxed'][e.mood]);add('Child’s words',e.quote?`“${e.quote}”`:'')}
   if(e.kind==='conflict'){add('Topic',e.topic);add('Escalation',CF_ESC[e.escalation]);add('Trigger',e.trigger);add('Where',CF_CH[e.channel]);add('Started by',{other:SET.other,me:SET.me,unclear:'Unclear'}[e.startedBy]);add('My response',CF_RESP[e.response]);add('Tried to de-escalate',e.deesc);add('Status',CF_OUT[e.outcome]);add('Next step',e.followUp);add('Child involved',e.childInvolved?'Yes':'')}
-  if(e.kind==='support'){add('Done by',e.who==='me'?SET.me:SET.other);add('Action',e.action);add('Amount',e.amount?money(e.amount):'');add('During',duringLabel(e))}
+  if(e.kind==='support'){add('Done by',e.who==='me'?SET.me:SET.other);add('Action',e.action);add('Amount',e.amount?money(e.amount):'');add('Length',e.durationMin?fDur(e.durationMin):'');add('Logged with',e.quick?'Quick button':'');add('During',duringLabel(e))}
   if(e.kind==='day'){add('Who had the child',{me:SET.me,other:SET.other,split:'Split'}[e.actual]);add('Planned',({me:SET.me,other:SET.other,split:'Split'}[planned(e.date)])||'—')}
   add('Children',kid(e.children));add('Factors',(e.tags||[]).join(', '));add('Corroborated by',e.source);
   if(e.loc)add('Location stamp',`${e.loc.lat.toFixed(5)}, ${e.loc.lon.toFixed(5)} (±${Math.round(e.loc.acc)} m)`);
@@ -546,6 +547,7 @@ function vHome(){
    <div style="font-size:18px;font-weight:800;margin-top:2px">${ac?`Logged: ${nm[ac]}`:pl?`Planned with ${nm[pl]}`:'No schedule set'}</div></div>
    ${ac?'':['me','other','split'].map(v=>`<button class="btn ghost sm" data-act="setday" data-date="${today}" data-val="${v}">${v==='split'?'Split':v==='me'?'Me':'Them'}</button>`).join('')}</div></div>
   <div class="card"><h3>Log it in one line</h3><div class="small mute" style="margin:2px 0 8px">Type or say what happened. It is sorted into the right entry for you to check.</div><div class="row"><input id="qc" placeholder="Gave Emma $300 for lunch" autocomplete="off"><button class="btn" data-act="qc">Log</button>${MIC?'<button class="btn ghost" data-act="qcdict" aria-label="Dictate">🎙</button>':''}</div></div>
+  ${qbHome()}
   <div class="qa" style="margin-bottom:14px">${['incident','exchange','comm','conflict','expense','journal','support'].map(k=>`<button data-act="new" data-k="${k}"><span>${KINDS[k].icon}</span>${KINDS[k].label}</button>`).join('')}<button data-act="go" data-r="tools"><span>✍️</span>Reply helper</button></div>
   <div class="card"><h3>Quick caregiving log</h3><div class="small mute" style="margin:2px 0 8px">Tap what you did today — any day, including the other parent’s.</div><div class="chips">${QUICK.map(a=>`<button class="chip" data-act="new" data-k="support" data-pre="${esc(a)}">${esc(a)}</button>`).join('')}</div></div>
   ${rsCard()}
@@ -620,9 +622,9 @@ function computeStats(list,from,to){
   let owedToMe=0,paidMe=0,paidOther=0;
   xp.forEach(e=>{const a=e.amount||0,mine=(e.myShare??50)/100;if(e.paidBy==='me'){paidMe+=a;if(e.reimb!=='paid')owedToMe+=a*(1-mine)}else{paidOther+=a;if(e.reimb!=='paid')owedToMe-=a*mine}});
   const supMe=sup.filter(e=>e.who==='me'),supOther=sup.filter(e=>e.who==='other');
-  const sum=a=>a.reduce((x,e)=>x+(e.amount||0),0);
+  const sum=a=>a.reduce((x,e)=>x+(e.amount||0),0);const mins=a=>a.reduce((x,e)=>x+(e.durationMin||0),0);
   const supDuring=supMe.filter(e=>{const k=(e.occurred||'').slice(0,10);return (actual(k)||planned(k))==='other'});
-  return {cf,sup,supMe,supOther,moneyMe:sum(supMe),moneyOther:sum(supOther),supDuring,n:L.length,inc,ex,cm,xp,jn,byTag,them,mine,lateThem:lateThem.length,lateMe:lateMe.length,avgLateThem:avg(lateThem),avgLateMe:avg(lateMe),
+  return {cf,sup,supMe,supOther,moneyMe:sum(supMe),moneyOther:sum(supOther),minMe:mins(supMe),minOther:mins(supOther),supDuring,n:L.length,inc,ex,cm,xp,jn,byTag,them,mine,lateThem:lateThem.length,lateMe:lateMe.length,avgLateThem:avg(lateThem),avgLateMe:avg(lateMe),
     noshowOther:stc('noshow_other'),noshowMe:stc('noshow_me'),denied:stc('denied'),cancelOther:stc('cancelled_other'),cancelMe:stc('cancelled_me'),
     myResp:avg(myResp),theirResp:avg(theirResp),nMy:myResp.length,nTheir:theirResp.length,hostile,owedToMe,paidMe,paidOther,positive:L.filter(e=>(e.tags||[]).includes('Positive parenting')).length};
 }
@@ -657,6 +659,7 @@ function vInsights(){
   <div class="card"><h3>Involvement (90d)</h3><table style="width:100%;margin-top:8px"><tr><td></td><td class="right mute small">${esc(SET.other)}</td><td class="right mute small">Me</td></tr>
     <tr><td>Caregiving actions logged</td><td class="right"><b>${s90.supOther.length}</b></td><td class="right"><b>${s90.supMe.length}</b></td></tr>
     <tr><td>Money given for the kids</td><td class="right"><b>${money(s90.moneyOther)}</b></td><td class="right"><b>${money(s90.moneyMe)}</b></td></tr>
+    <tr><td>Time logged (calls, homework, care)</td><td class="right"><b>${s90.minOther?fDur(s90.minOther):'—'}</b></td><td class="right"><b>${s90.minMe?fDur(s90.minMe):'—'}</b></td></tr>
     <tr><td>Done during the other parent’s time</td><td class="right">—</td><td class="right"><b>${s90.supDuring.length}</b></td></tr></table>
     ${s90.supMe.length?'<div style="margin-top:10px">'+bars(s90.supMe.reduce((o,e)=>(o[e.action]=(o[e.action]||0)+1,o),{}))+'</div>':'<p class="mute small" style="margin-top:8px">Log drop-offs, appointments and money given to build this picture.</p>'}</div>
   <div class="card"><h3>Incidents per week</h3>${bars(weeks,Math.max(3,...Object.values(weeks)),true)}</div>
@@ -759,7 +762,7 @@ async function buildReport(o){
   const dayRows=[];for(let k=o.from;k<=o.to;k=addDays(k,1)){const a=actual(k);if(a||planned(k))dayRows.push(`<tr><td>${k}</td><td>${DAYN[(dfrom(k).getDay()+6)%7]}</td><td>${nm[planned(k)]||'—'}</td><td>${nm[a]||'<i>not logged</i>'}</td><td>${a&&planned(k)&&a!==planned(k)?'Different':''}</td></tr>`)}
   const ex=L.filter(e=>e.kind==='exchange'&&!e.voided).map(e=>`<tr><td>${E(e)}</td><td>${fDT(e.schedAt||e.occurred)}</td><td>${e.dir==='pickup'?'Pick-up':'Drop-off'}</td><td>${STATUS_L[e.status]||''}</td><td>${fmtLate(lateMin(e.schedAt,e.theirArrive))||'—'}</td><td>${fmtLate(lateMin(e.schedAt,e.myArrive))||'—'}</td></tr>`).join('');
   const xp=L.filter(e=>e.kind==='expense'&&!e.voided).map(e=>`<tr><td>${E(e)}</td><td>${fDate(e.occurred)}</td><td>${esc(e.category)}</td><td>${esc(e.title)}</td><td>${e.paidBy==='me'?esc(SET.me):esc(SET.other)}</td><td>${money(e.amount||0)}</td><td>${e.myShare??50}%</td><td>${esc(e.reimb)}</td></tr>`).join('');
-  const sp=L.filter(e=>e.kind==='support'&&!e.voided).map(e=>`<tr><td>${E(e)}</td><td>${fDate(e.occurred)}</td><td>${e.who==='me'?esc(SET.me):esc(SET.other)}</td><td>${esc(e.action)}</td><td>${e.amount?money(e.amount):''}</td><td>${esc(duringLabel(e))}</td></tr>`).join('');
+  const sp=L.filter(e=>e.kind==='support'&&!e.voided).map(e=>`<tr><td>${E(e)}</td><td>${fDate(e.occurred)}</td><td>${e.who==='me'?esc(SET.me):esc(SET.other)}</td><td>${esc(e.action)}</td><td>${e.durationMin?fDur(e.durationMin):''}</td><td>${e.amount?money(e.amount):''}</td><td>${esc(duringLabel(e))}</td></tr>`).join('');
   const keyL=L.filter(e=>e.key&&!e.voided);
   const keySec=keyL.length?`<h2>1A. Key entries</h2><table><tr><th>Entry</th><th>Date</th><th>Type</th><th>Summary</th></tr>${keyL.map(e=>`<tr><td>${E(e)}</td><td>${fDT(e.occurred)}</td><td>${KINDS[e.kind].label}</td><td>${esc(e.title)}</td></tr>`).join('')}</table>`:'';
   const verified=await verifyChain();
@@ -785,7 +788,7 @@ async function buildReport(o){
    <table><tr><th></th><th>${esc(SET.other)}</th><th>${esc(SET.me)}</th></tr><tr><td>Exchanges &gt;5 min late</td><td>${st.lateThem}</td><td>${st.lateMe}</td></tr><tr><td>Average minutes late</td><td>${st.avgLateThem}</td><td>${st.avgLateMe}</td></tr><tr><td>No-shows / non-attendance</td><td>${st.noshowOther}</td><td>${st.noshowMe}</td></tr><tr><td>Cancellations</td><td>${st.cancelOther}</td><td>${st.cancelMe}</td></tr><tr><td>Hostile messages (tagged)</td><td>${st.hostile.other}</td><td>${st.hostile.me}</td></tr></table>
    ${keySec}
    ${ex?`<h2>2. Exchange log</h2><table><tr><th>Entry</th><th>Scheduled</th><th>Type</th><th>Outcome</th><th>${esc(SET.other)} arrival</th><th>My arrival</th></tr>${ex}</table>`:''}
-   ${sp?`<h2>2A. Parental involvement</h2><table><tr><th></th><th>${esc(SET.other)}</th><th>${esc(SET.me)}</th></tr><tr><td>Caregiving actions</td><td>${st.supOther.length}</td><td>${st.supMe.length}</td></tr><tr><td>Money given for the children</td><td>${money(st.moneyOther)}</td><td>${money(st.moneyMe)}</td></tr><tr><td>Done during the other parent’s time</td><td>—</td><td>${st.supDuring.length}</td></tr></table><table><tr><th>Entry</th><th>Date</th><th>Done by</th><th>Action</th><th>Amount</th><th>During</th></tr>${sp}</table>`:''}
+   ${sp?`<h2>2A. Parental involvement</h2><table><tr><th></th><th>${esc(SET.other)}</th><th>${esc(SET.me)}</th></tr><tr><td>Caregiving actions</td><td>${st.supOther.length}</td><td>${st.supMe.length}</td></tr><tr><td>Money given for the children</td><td>${money(st.moneyOther)}</td><td>${money(st.moneyMe)}</td></tr><tr><td>Time logged with or for the children</td><td>${st.minOther?fDur(st.minOther):'—'}</td><td>${st.minMe?fDur(st.minMe):'—'}</td></tr><tr><td>Done during the other parent’s time</td><td>—</td><td>${st.supDuring.length}</td></tr></table><table><tr><th>Entry</th><th>Date</th><th>Done by</th><th>Action</th><th>Length</th><th>Amount</th><th>During</th></tr>${sp}</table>`:''}
    ${st.cf.length?(()=>{const c=st.cf,cnt=f=>c.reduce((o,e)=>{const k=f(e);if(k)o[k]=(o[k]||0)+1;return o},{});const tb=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${v}</td></tr>`).join('');const av=(c.reduce((x,e)=>x+(e.escalation||1),0)/c.length).toFixed(1);
      return `<h2>2B. Conflict summary</h2><table><tr><th>Conflicts logged</th><td>${c.length}</td><th>Average escalation (1–5)</th><td>${av}</td></tr><tr><th>Started by ${esc(SET.other)}</th><td>${c.filter(e=>e.startedBy==='other').length}</td><th>Started by ${esc(SET.me)}</th><td>${c.filter(e=>e.startedBy==='me').length}</td></tr><tr><th>Child heard or involved</th><td>${c.filter(e=>e.childInvolved).length}</td><th>Still open</th><td>${c.filter(e=>CF_OPEN.includes(e.outcome)).length}</td></tr></table><table><tr><th>Topic</th><th>Count</th></tr>${tb(cnt(e=>e.topic))}</table><table><tr><th>My response</th><th>Count</th></tr>${tb(cnt(e=>CF_RESP[e.response]))}</table>`})():''}
    ${dayRows.length?`<h2>3. Daily parenting-time record</h2><table><tr><th>Date</th><th>Day</th><th>Scheduled</th><th>Actual</th><th>Variance</th></tr>${dayRows.join('')}</table>`:''}
@@ -812,6 +815,7 @@ function vSettings(){
   ${installCard()}
   <div class="card"><h3>You &amp; the case</h3><form id="sf" style="margin-top:10px"><div class="grid g2"><label class="f"><span>Your name</span><input name="me" value="${esc(SET.me==='Me'?'':SET.me)}" placeholder="Me"></label><label class="f"><span>Other parent</span><input name="other" value="${esc(SET.other==='Other parent'?'':SET.other)}" placeholder="Other parent"></label><label class="f"><span>Case number</span><input name="caseNo" value="${esc(SET.caseNo)}"></label><label class="f"><span>Court</span><input name="court" value="${esc(SET.court)}"></label></div><button class="btn sm">Save</button></form></div>
   <div class="card"><h3>Children</h3><div class="chips" style="margin:10px 0">${SET.children.map(c=>`<span class="chip">${esc(c.name)} <b data-act="rmkid" data-id="${c.id}" style="margin-left:6px;cursor:pointer">✕</b></span>`).join('')||'<span class="mute">None added</span>'}</div><div class="row"><input id="kidName" placeholder="Child’s first name"><button class="btn sm" data-act="addkid">Add</button></div></div>
+  ${qbCard()}
   <div class="card"><h3>Custody schedule</h3><p class="mute small">Enter what your order says. Changes are logged with an effective date, so old days keep the old schedule.</p>
    <div id="schedBox">${schedEditor(sch)}</div></div>
   <div class="card"><h3>Privacy lock</h3><p class="mute small">Locks the app after a minute in the background. This is a privacy screen — protect the device itself with Face ID / a Mac login as well.</p>
@@ -877,14 +881,14 @@ async function applyImport(mode){
     for(const ev of all){const n={...ev,seq:LEDGER.length+1,prev};delete n.hash;n.hash=await sha(canon(n));LEDGER.push(n);prev=n.hash}
     const mk={id:uid(),seq:LEDGER.length+1,ts:new Date().toISOString(),op:'merge',eid:null,data:{prevHeads,added},prev};mk.hash=await sha(canon(mk));LEDGER.push(mk);
     for(const ev of LEDGER)await DB.put('ledger',ev);
-    if(!SET.children.length)SET.children=d.settings.children||[];
+    if(!SET.children.length)SET.children=d.settings.children||[];if(!(SET.qbtns||[]).length)SET.qbtns=d.settings.qbtns||[];
   }
   await saveSettings();rebuild();await verifyChain();closeSheet();render();toast('Import complete');
 }
 function exportCSV(){
-  const cols=['seq','kind','occurred','logged_at','title','body','who','severity','status','sched_at','my_arrive','their_arrive','channel','direction','tone','amount','category','paid_by','reimbursement','tags','witnesses','voided','record_hash'];
+  const cols=['seq','kind','occurred','logged_at','title','body','who','severity','status','sched_at','my_arrive','their_arrive','channel','direction','tone','amount','minutes','category','paid_by','reimbursement','tags','witnesses','voided','record_hash'];
   const q=v=>{let s=String(v??'');if(/^[=+\-@]/.test(s))s="'"+s;return `"${s.replace(/"/g,'""')}"`};
-  const rows=entries().map(e=>[e.seq,e.kind,e.occurred,e.created,e.title,e.body||e.quote||'',e.who,e.severity,e.status,e.schedAt,e.myArrive,e.theirArrive,e.channel,e.dir,e.tone,e.amount,e.category,e.paidBy,e.reimb,(e.tags||[]).join('; '),e.witnesses,e.voided?e.voided.reason:'',e.hash].map(q).join(','));
+  const rows=entries().map(e=>[e.seq,e.kind,e.occurred,e.created,e.title,e.body||e.quote||'',e.who,e.severity,e.status,e.schedAt,e.myArrive,e.theirArrive,e.channel,e.dir,e.tone,e.amount,e.durationMin,e.category,e.paidBy,e.reimb,(e.tags||[]).join('; '),e.witnesses,e.voided?e.voided.reason:'',e.hash].map(q).join(','));
   const blob=new Blob([[cols.join(','),...rows].join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`custody-ledger-${dkey(new Date())}.csv`;a.click();
 }
 
@@ -1029,9 +1033,109 @@ function installTip(){
   return `<div class="card"><div class="row"><div class="grow"><b>Install this app</b><div class="small mute">${isIOS()?'Tap Share, then Add to Home Screen.':'In Safari: File, then Add to Dock.'} Install before you log anything. The installed app keeps its own data.</div></div><button class="btn ghost sm" data-act="dismisstip">Got it</button></div></div>`;
 }
 
+
+/* ---------- custom quick buttons ---------- */
+const QB_PRESETS=[
+ {icon:'🚗',label:'Drove kids to school',askChild:true},
+ {icon:'🏫',label:'Picked kids up from school',askChild:true},
+ {icon:'📞',label:'Phone call with child',askChild:true,askDur:true},
+ {icon:'📹',label:'Video call with child',askChild:true,askDur:true},
+ {icon:'📚',label:'Homework help',askChild:true,askDur:true},
+ {icon:'🩺',label:'Took child to appointment',askChild:true,askNote:true},
+ {icon:'💵',label:'Gave money for the kids',askAmt:true,askNote:true},
+ {icon:'🏟',label:'Attended game or event',askChild:true},
+ {icon:'🍽',label:'Made a meal',askChild:true},
+ {icon:'🤒',label:'Cared for sick child',askChild:true,askDur:true}
+];
+const QB_DURS=[5,10,15,30,45,60,90,120];
+const fDur=m=>{m=Math.round(m);if(m<60)return m+' min';const h=Math.floor(m/60),r=m%60;return h+' hr'+(r?' '+r+' min':'')};
+const qbList=()=>Array.isArray(SET.qbtns)?SET.qbtns:[];
+const qbFind=id=>qbList().find(b=>b.id===id);
+const localISO=ts=>{const d=new Date(ts);return `${dkey(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`};
+function qbAsksText(b){const a=[];if(b.askChild)a.push('which child');if(b.askDur)a.push('how long');if(b.askAmt)a.push('amount');if(b.askNote)a.push('note');return a.length?'Asks: '+a.join(', '):'One tap, records instantly'}
+function qbHome(){
+  const L=qbList();
+  if(!L.length)return `<div class="card"><h3>My quick buttons</h3><div class="small mute" style="margin:2px 0 8px">Make one-tap buttons for things you do again and again, like “Drove kids to school” or “Phone call with child”. One tap records the date, time and details.</div><button class="btn sm" data-act="qbsetup">Set up my buttons</button></div>`;
+  return `<div class="card"><div class="row"><h3 class="grow">My quick buttons</h3><button class="btn ghost sm" data-act="qbsetup">Edit</button></div><div class="chips" style="margin-top:10px">${L.map(b=>`<button class="chip qb" data-act="qbtap" data-id="${b.id}">${esc(b.icon||'✅')} ${esc(b.label)}</button>`).join('')}</div></div>`;
+}
+function qbCard(){
+  const L=qbList();
+  return `<div class="card" id="qbCard"><h3>Quick buttons</h3><p class="mute small">Build one-tap buttons for routine things. They appear on Home. When you tap one, it asks only what you choose here, then records the date, time and details for you.</p>
+  ${L.length?L.map((b,i)=>`<div class="row" style="padding:8px 0;border-top:1px solid var(--line)"><span style="font-size:22px">${esc(b.icon||'✅')}</span><div class="grow"><b>${esc(b.label)}</b><div class="small mute">${qbAsksText(b)}</div></div><button class="btn ghost sm" data-act="qbup" data-id="${b.id}" ${i?'':'disabled'} aria-label="Move up">↑</button><button class="btn ghost sm" data-act="qbdown" data-id="${b.id}" ${i<L.length-1?'':'disabled'} aria-label="Move down">↓</button><button class="btn ghost sm" data-act="qbedit" data-id="${b.id}">Edit</button></div>`).join(''):'<p class="mute small">None yet. Start from a ready-made button, or make your own:</p>'}
+  <div class="small mute" style="font-weight:700;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.04em">Add a button</div>
+  <div class="chips">${QB_PRESETS.map((p,i)=>`<button class="chip" data-act="qbpreset" data-i="${i}">${p.icon} ${esc(p.label)}</button>`).join('')}<button class="chip on" data-act="qbedit" data-id="">＋ Make my own</button></div></div>`;
+}
+function qbEditSheet(b){
+  const x=b||{icon:'✅',label:'',askChild:true,who:'me'};
+  const ck=(n,l,v)=>`<label class="ck"><input type="checkbox" name="${n}" ${v?'checked':''}> ${l}</label>`;
+  openSheet(b?'Edit button':'New quick button',`<form id="qbe" data-id="${b?b.id:''}">
+   <div class="grid" style="grid-template-columns:70px 1fr;gap:10px"><label class="f"><span>Icon</span><input name="icon" maxlength="4" value="${esc(x.icon)}"></label><label class="f"><span>Button name</span><input name="label" value="${esc(x.label)}" placeholder="e.g. Drove kids to school" maxlength="60" required></label></div>
+   <div class="small mute" style="font-weight:700;margin:4px 0 6px;text-transform:uppercase;letter-spacing:.04em">When I tap it, ask me</div>
+   ${ck('askChild','Which child',x.askChild)}${ck('askDur','How long (minutes)',x.askDur)}${ck('askAmt','Amount of money',x.askAmt)}${ck('askNote','A note',x.askNote)}
+   <p class="small mute" style="margin:6px 0 10px">Turn everything off and the button records instantly with one tap. The date and time are always captured.</p>
+   <label class="f"><span>Done by</span><select name="who"><option value="me" ${x.who!=='other'?'selected':''}>Me</option><option value="other" ${x.who==='other'?'selected':''}>${esc(SET.other)}</option></select></label>
+   <button class="btn" style="width:100%">${b?'Save button':'Add button'}</button>${b?`<button type="button" class="btn bad sm" style="margin-top:10px" data-act="qbdel" data-id="${b.id}">Delete this button</button><p class="small mute">Entries already logged with it stay on the record.</p>`:''}</form>`);
+}
+async function qbRecord(b,d){
+  const kids=SET.children,ch=(d.children||[]).filter(Boolean);
+  const names=ch.map(i=>(kids.find(c=>c.id===i)||{}).name).filter(Boolean);
+  const bits=[b.label];if(names.length)bits.push(names.join(' & '));if(d.dur)bits.push(fDur(d.dur));if(d.amount)bits.push(money(d.amount));
+  const rec={kind:'support',title:shortTitle(bits.join(' · ')),occurred:d.occurred||lnow(),action:b.label,who:b.who==='other'?'other':'me',amount:d.amount||null,body:d.note||'',children:ch,att:[],qb:b.id,quick:true};
+  if(d.dur)rec.durationMin=d.dur;
+  const eid=uid();await append('create',eid,rec);return eid;
+}
+function undoToast(eid,label){
+  const t=$('#toast');t.innerHTML=`${esc(label)} <button data-act="qbundo" data-id="${eid}" style="margin-left:10px;background:none;border:0;color:inherit;text-decoration:underline;font-weight:800;cursor:pointer;font-size:inherit">Undo</button>`;
+  t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',6000);
+}
+function qbSheet(b){
+  const kids=SET.children,needKid=b.askChild&&kids.length>1;
+  let h=`<form id="qbf" data-id="${b.id}">`;
+  if(needKid)h+=`<div class="f"><span>Which child?</span><div class="chips" style="margin-top:5px" data-chips="children">${kids.map(c=>`<button type="button" class="chip" data-act="chip" data-v="${c.id}">${esc(c.name)}</button>`).join('')}<button type="button" class="chip" data-act="qball">All</button></div></div>`;
+  if(b.askDur)h+=`<div class="f"><span>How long?</span><div class="chips" style="margin-top:5px" id="qbDurs">${QB_DURS.map(m=>`<button type="button" class="chip" data-act="qbdur" data-m="${m}">${fDur(m)}</button>`).join('')}</div><input name="dur" type="number" inputmode="numeric" min="1" max="1440" placeholder="or type minutes" style="margin-top:8px"></div>`;
+  if(b.askAmt)h+=`<label class="f"><span>Amount ($)</span><input name="amount" type="number" inputmode="decimal" step="0.01" min="0"></label>`;
+  h+=`<label class="f"><span>${b.askDur?'Started':'When'}</span><div class="row"><input type="datetime-local" name="occurred" value="${lnow()}"><button type="button" class="btn ghost sm" data-act="nowfill" data-n="occurred">Now</button></div></label>${b.askDur?'<p class="small mute" style="margin:-6px 0 10px">Set to now minus the length, since you usually log right after. Change it if needed.</p>':''}`;
+  if(b.askNote)h+=`<label class="f"><span>Note (optional)</span><textarea name="note" placeholder="Facts only"></textarea></label>`;
+  h+=`<button class="btn" style="width:100%">Log it</button></form>`;
+  openSheet(`${b.icon||'✅'} ${b.label}`,h,sh=>{
+    const occ=$('[name=occurred]',sh),dur=$('[name=dur]',sh);
+    if(occ)occ.addEventListener('input',()=>occ.dataset.m='1');
+    if(dur)dur.addEventListener('input',()=>{$$('#qbDurs .chip',sh).forEach(c=>c.classList.toggle('on',c.dataset.m===dur.value));const m=Number(dur.value);if(m>0&&occ&&!occ.dataset.m)occ.value=localISO(Date.now()-m*60000)});
+  });
+}
+async function qbSave(form){
+  const b=qbFind(form.dataset.id);if(!b)return;
+  const kids=SET.children,needKid=b.askChild&&kids.length>1;
+  const d={};
+  d.children=needKid?$$('[data-chips=children] .chip.on[data-v]',form).map(x=>x.dataset.v):(kids.length===1?[kids[0].id]:[]);
+  if(needKid&&!d.children.length){toast('Pick which child');return}
+  const dv=form.elements.dur;if(dv&&dv.value!==''){const m=Math.round(Number(dv.value));if(!(m>0)||m>1440){toast('Enter minutes between 1 and 1440');return}d.dur=m}
+  const av=form.elements.amount;if(av&&av.value!==''){const a=Number(av.value);if(!(a>=0)){toast('Enter a valid amount');return}d.amount=a}
+  d.occurred=form.elements.occurred.value||lnow();
+  const nv=form.elements.note;if(nv)d.note=nv.value.trim();
+  const btn=$('button:not([type=button])',form);btn.disabled=true;
+  try{await qbRecord(b,d);closeSheet();render(true);toast('Logged: '+b.label)}
+  catch(err){btn.disabled=false;toast('Could not save: '+err.message,5000)}
+}
+
 /* ---------- actions ---------- */
 const ACTS={
   go:t=>{ROUTE=t.dataset.r;render()},
+
+  qbsetup:()=>{ROUTE='settings';render();setTimeout(()=>{const el=$('#qbCard');if(el&&el.scrollIntoView)el.scrollIntoView()},60)},
+  qbtap:async t=>{const b=qbFind(t.dataset.id);if(!b)return;const kids=SET.children;
+    if(!(b.askChild&&kids.length>1)&&!b.askDur&&!b.askAmt&&!b.askNote){
+      try{const eid=await qbRecord(b,{children:kids.length===1?[kids[0].id]:[]});render(true);undoToast(eid,'Logged: '+b.label)}catch(err){toast('Could not save: '+err.message,5000)}
+      return}
+    qbSheet(b)},
+  qball:t=>{$$('.chip[data-v]',t.parentNode).forEach(c=>c.classList.add('on'))},
+  qbdur:t=>{const sh=$('#sheet');$$('#qbDurs .chip',sh).forEach(c=>c.classList.toggle('on',c===t));const m=Number(t.dataset.m),dv=$('[name=dur]',sh),occ=$('[name=occurred]',sh);if(dv)dv.value=m;if(occ&&!occ.dataset.m)occ.value=localISO(Date.now()-m*60000)},
+  qbundo:async t=>{try{await append('void',t.dataset.id,{reason:'Logged by mistake (undone immediately)'});$('#toast').style.display='none';render(true);toast('Undone. Still on record, marked void.')}catch(err){toast('Could not undo: '+err.message,5000)}},
+  qbpreset:async t=>{const p=QB_PRESETS[Number(t.dataset.i)];if(!p)return;SET.qbtns=[...qbList(),{id:uid(),icon:p.icon,label:p.label,askChild:!!p.askChild,askDur:!!p.askDur,askAmt:!!p.askAmt,askNote:!!p.askNote,who:'me'}];await saveSettings();render(true);toast('Added to Home: '+p.label)},
+  qbedit:t=>qbEditSheet(t.dataset.id?qbFind(t.dataset.id):null),
+  qbdel:async t=>{if(!confirm('Delete this button? Entries already logged stay on the record.'))return;SET.qbtns=qbList().filter(b=>b.id!==t.dataset.id);await saveSettings();closeSheet();render(true);toast('Button deleted')},
+  qbup:async t=>{const L=[...qbList()],i=L.findIndex(b=>b.id===t.dataset.id);if(i>0){[L[i-1],L[i]]=[L[i],L[i-1]];SET.qbtns=L;await saveSettings();render(true)}},
+  qbdown:async t=>{const L=[...qbList()],i=L.findIndex(b=>b.id===t.dataset.id);if(i>=0&&i<L.length-1){[L[i+1],L[i]]=[L[i],L[i+1]];SET.qbtns=L;await saveSettings();render(true)}},
   close:()=>closeSheet(),
   new:t=>openEntry(t.dataset.k,null,t.dataset.pre?{action:t.dataset.pre}:undefined),
   newon:t=>{closeSheet();openEntry(t.dataset.k);const el=$('#ef [name=occurred]');if(el)el.value=t.dataset.date+'T'+lnow().slice(11)},
@@ -1113,6 +1217,12 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('keydown',e=>{if(e.target&&e.target.id==='qc'&&e.key==='Enter'){e.preventDefault();ACTS.qc()}});
 document.addEventListener('submit',async e=>{
+  if(e.target.id==='qbf'){e.preventDefault();qbSave(e.target);return}
+  if(e.target.id==='qbe'){e.preventDefault();const f=e.target,lab=f.elements.label.value.trim();if(!lab){toast('Give the button a name');return}
+    const rec={icon:(f.elements.icon.value.trim()||'✅').slice(0,4),label:lab,askChild:f.elements.askChild.checked,askDur:f.elements.askDur.checked,askAmt:f.elements.askAmt.checked,askNote:f.elements.askNote.checked,who:f.elements.who.value==='other'?'other':'me'};
+    const id=f.dataset.id;
+    if(id)SET.qbtns=qbList().map(b=>b.id===id?{...b,...rec}:b);else SET.qbtns=[...qbList(),{id:uid(),...rec}];
+    await saveSettings();closeSheet();render(true);toast(id?'Button saved':'Button added to Home');return}
   if(e.target.id==='sf'){e.preventDefault();const f=new FormData(e.target);SET.me=f.get('me').trim()||'Me';SET.other=f.get('other').trim()||'Other parent';SET.caseNo=f.get('caseNo').trim();SET.court=f.get('court').trim();await saveSettings();toast('Saved');render()}
   if(e.target.id==='rf'){e.preventDefault();const f=new FormData(e.target);const kinds=$$('[data-chips=kinds] .chip.on',e.target).map(x=>x.dataset.v);
     const btn=$('button:not([type=button])',e.target);btn.disabled=true;btn.textContent='Building…';
